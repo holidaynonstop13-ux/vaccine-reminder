@@ -9,6 +9,7 @@
 - [ ] ออกแบบตารางฐานข้อมูล (patients, appointments, line_links)
 - [x] หน้า LIFF สำหรับผู้ปกครองผูกบัญชี LINE (`/link`)
 - [x] Cron job ตรวจสอบนัดหมายรายวันและส่งข้อความแจ้งเตือน (`/api/cron/notify-appointments`, รันทุก 07:00 น.)
+- [x] หน้า Admin จัดการคนไข้ + ปุ่มส่งแจ้งเตือนตอนนี้ (`/admin`, ล็อกด้วยรหัสผ่าน)
 - [ ] ปุ่มยืนยัน/ขอเลื่อนนัดผ่าน Quick Reply
 
 ## Setup (local dev)
