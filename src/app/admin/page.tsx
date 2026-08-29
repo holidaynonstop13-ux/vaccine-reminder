@@ -36,6 +36,12 @@ export default function AdminPage() {
   const [notifyResult, setNotifyResult] = useState<string | null>(null);
   const [notifying, setNotifying] = useState(false);
 
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [newUser, setNewUser] = useState({ username: "", password: "" });
+  const [userError, setUserError] = useState("");
+  const [userSaving, setUserSaving] = useState(false);
+  const [userSuccess, setUserSuccess] = useState("");
+
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -108,6 +114,35 @@ export default function AdminPage() {
     loadPatients();
   }
 
+  async function handleAddUser(e: React.FormEvent) {
+    e.preventDefault();
+    setUserSaving(true);
+    setUserError("");
+    setUserSuccess("");
+
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newUser),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setUserError(data.error ?? "เพิ่มผู้ใช้ไม่สำเร็จ");
+      setUserSaving(false);
+      return;
+    }
+
+    setUserSuccess(`เพิ่มผู้ใช้ "${newUser.username}" สำเร็จ`);
+    setNewUser({ username: "", password: "" });
+    setUserSaving(false);
+  }
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
   return (
     <main className="min-h-screen bg-[#F3F7F5] px-6 py-8">
       <div className="max-w-4xl mx-auto">
@@ -134,8 +169,48 @@ export default function AdminPage() {
             >
               + เพิ่มเด็ก
             </button>
+            <button
+              onClick={() => setShowUserForm((v) => !v)}
+              className="rounded-lg border border-[#2F6F62] text-[#2F6F62] text-sm font-medium px-4 py-2"
+            >
+              + ผู้ใช้แอดมิน
+            </button>
+            <button
+              onClick={handleLogout}
+              className="rounded-lg text-[#5B7B73] text-sm font-medium px-3 py-2"
+            >
+              ออกจากระบบ
+            </button>
           </div>
         </div>
+
+        {showUserForm && (
+          <form
+            onSubmit={handleAddUser}
+            className="mb-6 bg-white rounded-2xl p-5 shadow-sm flex gap-3 items-end flex-wrap"
+          >
+            <Input
+              label="ชื่อผู้ใช้ใหม่"
+              value={newUser.username}
+              onChange={(v) => setNewUser({ ...newUser, username: v })}
+            />
+            <Input
+              label="รหัสผ่าน (8 ตัวขึ้นไป)"
+              type="password"
+              value={newUser.password}
+              onChange={(v) => setNewUser({ ...newUser, password: v })}
+            />
+            <button
+              type="submit"
+              disabled={userSaving}
+              className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
+            >
+              {userSaving ? "กำลังบันทึก..." : "เพิ่มผู้ใช้"}
+            </button>
+            {userError && <p className="w-full text-sm text-[#B3452E]">{userError}</p>}
+            {userSuccess && <p className="w-full text-sm text-[#2F6F62]">{userSuccess}</p>}
+          </form>
+        )}
 
         {notifyResult && (
           <div className="mb-4 rounded-lg bg-white px-4 py-3 text-sm text-[#1E3D36] shadow-sm">

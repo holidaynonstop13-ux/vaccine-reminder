@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifySessionCookie } from "@/lib/auth";
 
-export function proxy(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  const user = process.env.ADMIN_USERNAME;
-  const pass = process.env.ADMIN_PASSWORD;
+export async function proxy(req: NextRequest) {
+  const cookie = req.cookies.get("admin_session")?.value;
+  const username = await verifySessionCookie(cookie);
 
-  if (auth) {
-    const encoded = auth.split(" ")[1] ?? "";
-    const decoded = atob(encoded);
-    const [inputUser, inputPass] = decoded.split(":");
-    if (inputUser === user && inputPass === pass) {
-      return NextResponse.next();
-    }
+  if (username) {
+    return NextResponse.next();
   }
 
-  return new NextResponse("กรุณาเข้าสู่ระบบ", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Admin"' },
-  });
+  if (req.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const loginUrl = new URL("/login", req.url);
+  loginUrl.searchParams.set("returnTo", req.nextUrl.pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
