@@ -7,7 +7,7 @@
 - [x] สร้างโปรเจค Next.js + Tailwind + TypeScript
 - [x] ติดตั้ง Supabase client และ LINE SDK
 - [ ] ออกแบบตารางฐานข้อมูล (patients, appointments, line_links)
-- [ ] หน้า LIFF สำหรับผู้ปกครองผูกบัญชี LINE
+- [x] หน้า LIFF สำหรับผู้ปกครองผูกบัญชี LINE (`/link`)
 - [ ] Cron job ตรวจสอบนัดหมายรายวันและส่งข้อความแจ้งเตือน
 - [ ] ปุ่มยืนยัน/ขอเลื่อนนัดผ่าน Quick Reply
 
