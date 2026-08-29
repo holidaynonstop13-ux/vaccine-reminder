@@ -15,6 +15,7 @@ type Patient = {
   last_name: string;
   guardian_name: string;
   guardian_phone: string;
+  queue_code: string | null;
   linked: boolean;
   appointments: Appointment[];
 };
@@ -48,6 +49,7 @@ export default function AdminPage() {
     dateOfBirth: "",
     guardianName: "",
     guardianPhone: "",
+    queueCode: "",
     appointmentDate: "",
     vaccineName: "",
   });
@@ -88,6 +90,7 @@ export default function AdminPage() {
       dateOfBirth: "",
       guardianName: "",
       guardianPhone: "",
+      queueCode: "",
       appointmentDate: "",
       vaccineName: "",
     });
@@ -228,6 +231,7 @@ export default function AdminPage() {
             <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
             <Input label="ชื่อผู้ปกครอง" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} />
             <Input label="เบอร์โทรผู้ปกครอง" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} />
+            <Input label="รหัสคิว (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
             <Input label="วันนัดฉีดวัคซีน" type="date" value={form.appointmentDate} onChange={(v) => setForm({ ...form, appointmentDate: v })} />
             <Input label="ชื่อวัคซีน" value={form.vaccineName} onChange={(v) => setForm({ ...form, vaccineName: v })} />
 
@@ -250,6 +254,7 @@ export default function AdminPage() {
             <thead className="bg-[#EAF2EF] text-[#1E3D36] text-left">
               <tr>
                 <th className="px-4 py-3">ชื่อเด็ก</th>
+                <th className="px-4 py-3">รหัสคิว</th>
                 <th className="px-4 py-3">ผู้ปกครอง</th>
                 <th className="px-4 py-3">ผูกบัญชี LINE</th>
                 <th className="px-4 py-3">นัดหมาย</th>
@@ -258,14 +263,14 @@ export default function AdminPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-[#5B7B73]">
+                  <td colSpan={5} className="px-4 py-6 text-center text-[#5B7B73]">
                     กำลังโหลด...
                   </td>
                 </tr>
               )}
               {!loading && patients.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-[#5B7B73]">
+                  <td colSpan={5} className="px-4 py-6 text-center text-[#5B7B73]">
                     ยังไม่มีข้อมูลเด็ก
                   </td>
                 </tr>
@@ -274,6 +279,9 @@ export default function AdminPage() {
                 <tr key={p.id} className="border-t border-[#EAF2EF]">
                   <td className="px-4 py-3 text-[#1E3D36]">
                     {p.first_name} {p.last_name}
+                  </td>
+                  <td className="px-4 py-3 text-[#1E3D36] font-medium">
+                    {p.queue_code ?? "-"}
                   </td>
                   <td className="px-4 py-3 text-[#5B7B73]">
                     {p.guardian_name}

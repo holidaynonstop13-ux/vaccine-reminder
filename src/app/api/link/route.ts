@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-function normalizePhone(phone: string) {
-  return phone.replace(/\D/g, "");
-}
-
 async function verifyLineIdToken(idToken: string) {
   // LIFF ID looks like "2011320531-zAdtQQgH" — the part before the
   // dash is the LINE Login Channel ID, which LINE's verify endpoint
@@ -24,14 +20,10 @@ async function verifyLineIdToken(idToken: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { idToken, childFirstName, childLastName, guardianPhone } =
-    await req.json();
+  const { idToken, queueCode } = await req.json();
 
-  if (!idToken || !childFirstName || !childLastName || !guardianPhone) {
-    return NextResponse.json(
-      { error: "กรุณากรอกข้อมูลให้ครบถ้วน" },
-      { status: 400 }
-    );
+  if (!idToken || !queueCode) {
+    return NextResponse.json({ error: "กรุณากรอกรหัสคิว" }, { status: 400 });
   }
 
   const lineUserId = await verifyLineIdToken(idToken);
@@ -42,16 +34,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const normalizedInputPhone = normalizePhone(guardianPhone);
+  const normalizedCode = queueCode.trim().toUpperCase();
 
-  // Pull candidates by name, then compare normalized phone in code
-  // (Postgres text match on formatted phone numbers is unreliable
-  // if some numbers were saved with dashes/spaces and others weren't).
-  const { data: candidates, error: queryError } = await supabaseAdmin
+  const { data: match, error: queryError } = await supabaseAdmin
     .from("patients")
-    .select("id, first_name, last_name, guardian_phone")
-    .ilike("first_name", childFirstName.trim())
-    .ilike("last_name", childLastName.trim());
+    .select("id, first_name, last_name")
+    .eq("queue_code", normalizedCode)
+    .maybeSingle();
 
   if (queryError) {
     return NextResponse.json(
@@ -60,16 +49,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const match = candidates?.find(
-    (p) => normalizePhone(p.guardian_phone) === normalizedInputPhone
-  );
-
   if (!match) {
     return NextResponse.json(
-      {
-        error:
-          "ไม่พบข้อมูลที่ตรงกัน กรุณาตรวจสอบชื่อ-นามสกุลเด็กและเบอร์โทรผู้ปกครองอีกครั้ง",
-      },
+      { error: "ไม่พบรหัสคิวนี้ กรุณาตรวจสอบอีกครั้ง" },
       { status: 404 }
     );
   }

@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 export async function GET() {
   const { data: patients, error: patientsError } = await supabaseAdmin
     .from("patients")
-    .select("id, first_name, last_name, guardian_name, guardian_phone, created_at")
+    .select("id, first_name, last_name, guardian_name, guardian_phone, queue_code, created_at")
     .order("created_at", { ascending: false });
 
   if (patientsError) {
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     dateOfBirth,
     guardianName,
     guardianPhone,
+    queueCode,
     appointmentDate,
     vaccineName,
   } = body;
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
     !dateOfBirth ||
     !guardianName ||
     !guardianPhone ||
+    !queueCode ||
     !appointmentDate ||
     !vaccineName
   ) {
@@ -63,12 +65,16 @@ export async function POST(req: NextRequest) {
       date_of_birth: dateOfBirth,
       guardian_name: guardianName,
       guardian_phone: guardianPhone,
+      queue_code: queueCode.trim().toUpperCase(),
     })
     .select("id")
     .single();
 
   if (patientError) {
-    return NextResponse.json({ error: patientError.message }, { status: 500 });
+    const message = patientError.message.includes("duplicate")
+      ? "รหัสคิวนี้ถูกใช้ไปแล้ว กรุณาใช้รหัสอื่น"
+      : patientError.message;
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const { error: apptError } = await supabaseAdmin.from("appointments").insert({

@@ -10,9 +10,7 @@ export default function LinkPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [childName, setChildName] = useState("");
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [queueCode, setQueueCode] = useState("");
 
   useEffect(() => {
     async function init() {
@@ -48,9 +46,7 @@ export default function LinkPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idToken,
-          childFirstName: firstName,
-          childLastName: lastName,
-          guardianPhone: phone,
+          queueCode,
         }),
       });
       const data = await res.json();
@@ -78,7 +74,7 @@ export default function LinkPage() {
             ลงทะเบียนรับแจ้งเตือนวัคซีน
           </h1>
           <p className="mt-1 text-sm text-[#5B7B73] text-center">
-            กรอกข้อมูลเด็กเพื่อรับการแจ้งเตือนวันนัดผ่าน LINE
+            กรอกรหัสคิวที่ได้รับจากเจ้าหน้าที่ เพื่อรับการแจ้งเตือนวันนัดผ่าน LINE
           </p>
         </div>
 
@@ -100,23 +96,10 @@ export default function LinkPage() {
             className="bg-white rounded-2xl p-5 shadow-sm space-y-4"
           >
             <Field
-              label="ชื่อเด็ก"
-              value={firstName}
-              onChange={setFirstName}
-              placeholder="เช่น สมชาย"
-            />
-            <Field
-              label="นามสกุลเด็ก"
-              value={lastName}
-              onChange={setLastName}
-              placeholder="เช่น ใจดี"
-            />
-            <Field
-              label="เบอร์โทรผู้ปกครอง"
-              value={phone}
-              onChange={setPhone}
-              placeholder="เช่น 0812345678"
-              type="tel"
+              label="รหัสคิว"
+              value={queueCode}
+              onChange={setQueueCode}
+              placeholder="เช่น A01"
             />
 
             {errorMessage && (
@@ -171,6 +154,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        autoCapitalize="characters"
         className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2.5 text-[#1E3D36] placeholder:text-[#A9BDB6] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
       />
     </label>
