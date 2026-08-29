@@ -7,9 +7,8 @@ export function proxy(req: NextRequest) {
 
   if (auth) {
     const encoded = auth.split(" ")[1] ?? "";
-    const [inputUser, inputPass] = Buffer.from(encoded, "base64")
-      .toString()
-      .split(":");
+    const decoded = atob(encoded);
+    const [inputUser, inputPass] = decoded.split(":");
     if (inputUser === user && inputPass === pass) {
       return NextResponse.next();
     }
