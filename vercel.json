@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/notify-appointments",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

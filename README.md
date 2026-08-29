@@ -8,7 +8,7 @@
 - [x] ติดตั้ง Supabase client และ LINE SDK
 - [ ] ออกแบบตารางฐานข้อมูล (patients, appointments, line_links)
 - [x] หน้า LIFF สำหรับผู้ปกครองผูกบัญชี LINE (`/link`)
-- [ ] Cron job ตรวจสอบนัดหมายรายวันและส่งข้อความแจ้งเตือน
+- [x] Cron job ตรวจสอบนัดหมายรายวันและส่งข้อความแจ้งเตือน (`/api/cron/notify-appointments`, รันทุก 07:00 น.)
 - [ ] ปุ่มยืนยัน/ขอเลื่อนนัดผ่าน Quick Reply
 
 ## Setup (local dev)
