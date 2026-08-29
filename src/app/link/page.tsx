@@ -17,14 +17,19 @@ export default function LinkPage() {
   useEffect(() => {
     async function init() {
       try {
-        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+        const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+        if (!liffId) {
+          throw new Error("ไม่พบค่า NEXT_PUBLIC_LIFF_ID ในระบบ (env var ไม่ถูกตั้งค่า)");
+        }
+        await liff.init({ liffId });
         if (!liff.isLoggedIn()) {
           liff.login();
           return;
         }
         setStatus("ready");
-      } catch {
-        setErrorMessage("เปิดหน้านี้ผ่าน LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        setErrorMessage(`เปิดหน้านี้ผ่าน LINE ไม่สำเร็จ: ${detail}`);
         setStatus("error");
       }
     }
