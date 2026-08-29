@@ -16,21 +16,35 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (!res.ok) {
-      setError(data.error ?? "เข้าสู่ระบบไม่สำเร็จ");
+      let data: { error?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        setError(`เซิร์ฟเวอร์ตอบกลับผิดปกติ (สถานะ ${res.status})`);
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        setError(data.error ?? `เข้าสู่ระบบไม่สำเร็จ (สถานะ ${res.status})`);
+        setLoading(false);
+        return;
+      }
+
+      router.push(params.get("returnTo") || "/admin");
+      router.refresh();
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      setError(`เชื่อมต่อไม่สำเร็จ: ${detail}`);
       setLoading(false);
-      return;
     }
-
-    router.push(params.get("returnTo") || "/admin");
-    router.refresh();
   }
 
   return (
