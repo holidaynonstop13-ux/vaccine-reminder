@@ -57,16 +57,26 @@ function calculateAge(dob: string) {
   const birth = new Date(dob);
   if (Number.isNaN(birth.getTime())) return "-";
   const now = new Date();
+
   let years = now.getFullYear() - birth.getFullYear();
   let months = now.getMonth() - birth.getMonth();
-  if (now.getDate() < birth.getDate()) months--;
+  let days = now.getDate() - birth.getDate();
+
+  if (days < 0) {
+    months--;
+    const prevMonthLastDay = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+    days += prevMonthLastDay;
+  }
   if (months < 0) {
     years--;
     months += 12;
   }
-  if (years <= 0) return `${months} เดือน`;
-  if (months === 0) return `${years} ปี`;
-  return `${years} ปี ${months} เดือน`;
+
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} ปี`);
+  if (months > 0) parts.push(`${months} เดือน`);
+  if (days > 0 || parts.length === 0) parts.push(`${days} วัน`);
+  return parts.join(" ");
 }
 
 export default function AdminPage() {
