@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, KeyRound, X } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
 type AdminUser = {
@@ -26,6 +26,9 @@ export default function UsersPage() {
   const [newUser, setNewUser] = useState({ username: "", password: "", role: "staff" as "admin" | "staff" });
   const [userError, setUserError] = useState("");
   const [userSaving, setUserSaving] = useState(false);
+
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
+  const [resetUsername, setResetUsername] = useState("");
 
   async function loadUsers() {
     setLoading(true);
@@ -190,12 +193,23 @@ export default function UsersPage() {
                       {new Date(u.created_at).toLocaleDateString("th-TH")}
                     </td>
                     <td className="px-5 py-3.5">
-                      <button
-                        onClick={() => deleteUser(u.id, u.username)}
-                        className="flex items-center gap-1.5 text-sm text-[#B3452E] hover:bg-[#FBE4E0] rounded-lg px-2 py-1.5"
-                      >
-                        <Trash2 size={14} /> ลบ
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => {
+                            setResetUserId(u.id);
+                            setResetUsername(u.username);
+                          }}
+                          className="flex items-center gap-1.5 text-sm text-[#2F6F62] hover:bg-[#E4F3EC] rounded-lg px-2 py-1.5"
+                        >
+                          <KeyRound size={14} /> เปลี่ยนรหัสผ่าน
+                        </button>
+                        <button
+                          onClick={() => deleteUser(u.id, u.username)}
+                          className="flex items-center gap-1.5 text-sm text-[#B3452E] hover:bg-[#FBE4E0] rounded-lg px-2 py-1.5"
+                        >
+                          <Trash2 size={14} /> ลบ
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -204,6 +218,112 @@ export default function UsersPage() {
           </div>
         </div>
       </main>
+
+      <ResetPasswordModal
+        userId={resetUserId}
+        username={resetUsername}
+        onClose={() => setResetUserId(null)}
+      />
+    </div>
+  );
+}
+
+function ResetPasswordModal({
+  userId,
+  username,
+  onClose,
+}: {
+  userId: string | null;
+  username: string;
+  onClose: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const open = userId !== null;
+
+  useEffect(() => {
+    if (open) {
+      setPassword("");
+      setError("");
+      setDone(false);
+    }
+  }, [open, userId]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error ?? "เปลี่ยนรหัสผ่านไม่สำเร็จ");
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
+    setDone(true);
+  }
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
+      <div
+        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={onClose}
+      />
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-sm transition-all duration-150 ${
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        }`}
+      >
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <h2 className="text-lg font-semibold text-[#152D28]">เปลี่ยนรหัสผ่าน</h2>
+            <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+              <X size={20} />
+            </button>
+          </div>
+          <p className="text-sm text-[#5B7B73] mb-4">สำหรับผู้ใช้ &quot;{username}&quot;</p>
+
+          {done ? (
+            <div className="space-y-4">
+              <p className="text-sm text-[#2F6F62]">เปลี่ยนรหัสผ่านสำเร็จ</p>
+              <button
+                onClick={onClose}
+                className="w-full rounded-lg bg-[#2F6F62] text-white text-sm font-medium py-2.5"
+              >
+                ปิด
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSave} className="space-y-4">
+              <label className="block">
+                <span className="text-sm text-[#1E3D36] font-medium">รหัสผ่านใหม่ (8 ตัวขึ้นไป)</span>
+                <input
+                  required
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                />
+              </label>
+              {error && <p className="text-sm text-[#B3452E]">{error}</p>}
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full rounded-lg bg-[#2F6F62] text-white text-sm font-medium py-2.5 disabled:opacity-60"
+              >
+                {saving ? "กำลังบันทึก..." : "บันทึกรหัสผ่านใหม่"}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
