@@ -15,6 +15,9 @@ import {
   Send,
   CheckCircle2,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Syringe,
 } from "lucide-react";
 
 type Appointment = {
@@ -56,13 +59,14 @@ export default function AdminPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [notifyResult, setNotifyResult] = useState<string | null>(null);
   const [notifying, setNotifying] = useState(false);
-  const [drawerPatientId, setDrawerPatientId] = useState<string | null>(null);
+  const [modalPatientId, setModalPatientId] = useState<string | null>(null);
 
   const [showUserForm, setShowUserForm] = useState(false);
   const [newUser, setNewUser] = useState({ username: "", password: "" });
@@ -102,7 +106,7 @@ export default function AdminPage() {
     });
   }, [patients, search]);
 
-  const drawerPatient = patients.find((p) => p.id === drawerPatientId) ?? null;
+  const modalPatient = patients.find((p) => p.id === modalPatientId) ?? null;
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -185,196 +189,235 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F3F7F5]">
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <div>
+    <div className="flex min-h-screen bg-[#F3F7F5]">
+      <Sidebar
+        open={sidebarOpen}
+        onToggle={() => setSidebarOpen((v) => !v)}
+        onNotify={handleNotifyNow}
+        notifying={notifying}
+        onAddChild={() => setShowForm((v) => !v)}
+        onAddUser={() => setShowUserForm((v) => !v)}
+        onLogout={handleLogout}
+      />
+
+      <main className="flex-1 min-w-0">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="mb-6">
             <h1 className="text-2xl font-semibold text-[#152D28] tracking-tight">
               ระบบจัดการวัคซีน
             </h1>
             <p className="text-sm text-[#5B7B73] mt-0.5">เด็กทั้งหมด {patients.length} คน</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <IconButton onClick={handleNotifyNow} disabled={notifying} icon={<Bell size={16} />} primary>
-              {notifying ? "กำลังส่ง..." : "ส่งแจ้งเตือนตอนนี้"}
-            </IconButton>
-            <IconButton onClick={() => setShowForm((v) => !v)} icon={<UserPlus size={16} />}>
-              เพิ่มเด็ก
-            </IconButton>
-            <IconButton onClick={() => setShowUserForm((v) => !v)} icon={<ShieldPlus size={16} />}>
-              ผู้ใช้แอดมิน
-            </IconButton>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 text-sm text-[#5B7B73] hover:text-[#1E3D36] px-3 py-2"
+
+          {notifyResult && (
+            <div className="mb-4 rounded-xl bg-white px-4 py-3 text-sm text-[#1E3D36] shadow-sm border border-[#E5ECE9]">
+              {notifyResult}
+            </div>
+          )}
+
+          {showUserForm && (
+            <form
+              onSubmit={handleAddUser}
+              className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#E5ECE9] flex gap-3 items-end flex-wrap"
             >
-              <LogOut size={16} /> ออกจากระบบ
-            </button>
-          </div>
-        </div>
-
-        {notifyResult && (
-          <div className="mb-4 rounded-xl bg-white px-4 py-3 text-sm text-[#1E3D36] shadow-sm border border-[#E5ECE9]">
-            {notifyResult}
-          </div>
-        )}
-
-        {showUserForm && (
-          <form
-            onSubmit={handleAddUser}
-            className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#E5ECE9] flex gap-3 items-end flex-wrap"
-          >
-            <Input label="ชื่อผู้ใช้ใหม่" value={newUser.username} onChange={(v) => setNewUser({ ...newUser, username: v })} />
-            <Input label="รหัสผ่าน (8 ตัวขึ้นไป)" type="password" value={newUser.password} onChange={(v) => setNewUser({ ...newUser, password: v })} />
-            <button
-              type="submit"
-              disabled={userSaving}
-              className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
-            >
-              {userSaving ? "กำลังบันทึก..." : "เพิ่มผู้ใช้"}
-            </button>
-            {userError && <p className="w-full text-sm text-[#B3452E]">{userError}</p>}
-            {userSuccess && <p className="w-full text-sm text-[#2F6F62]">{userSuccess}</p>}
-          </form>
-        )}
-
-        {showForm && (
-          <form onSubmit={handleAdd} className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#E5ECE9] grid grid-cols-2 gap-3">
-            <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
-            <Input label="นามสกุลเด็ก" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
-            <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
-            <Input label="ชื่อผู้ปกครอง" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} />
-            <Input label="เบอร์โทรผู้ปกครอง" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} />
-            <Input label="รหัสคิว (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
-            <Input label="วันนัดฉีดวัคซีน" type="date" value={form.appointmentDate} onChange={(v) => setForm({ ...form, appointmentDate: v })} />
-            <Input label="ชื่อวัคซีน" value={form.vaccineName} onChange={(v) => setForm({ ...form, vaccineName: v })} />
-
-            {formError && <p className="col-span-2 text-sm text-[#B3452E]">{formError}</p>}
-
-            <div className="col-span-2 flex justify-end gap-2 mt-2">
+              <Input label="ชื่อผู้ใช้ใหม่" value={newUser.username} onChange={(v) => setNewUser({ ...newUser, username: v })} />
+              <Input label="รหัสผ่าน (8 ตัวขึ้นไป)" type="password" value={newUser.password} onChange={(v) => setNewUser({ ...newUser, password: v })} />
               <button
                 type="submit"
-                disabled={saving}
-                className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+                disabled={userSaving}
+                className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
               >
-                {saving ? "กำลังบันทึก..." : "บันทึก"}
+                {userSaving ? "กำลังบันทึก..." : "เพิ่มผู้ใช้"}
               </button>
-            </div>
-          </form>
-        )}
+              {userError && <p className="w-full text-sm text-[#B3452E]">{userError}</p>}
+              {userSuccess && <p className="w-full text-sm text-[#2F6F62]">{userSuccess}</p>}
+            </form>
+          )}
 
-        <div className="relative mb-4">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8FAAA2]" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหาชื่อเด็กหรือรหัสคิว..."
-            className="w-full rounded-xl border border-[#E5ECE9] bg-white pl-10 pr-4 py-2.5 text-sm text-[#1E3D36] placeholder:text-[#A9BDB6] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
-          />
-        </div>
+          {showForm && (
+            <form onSubmit={handleAdd} className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#E5ECE9] grid grid-cols-2 gap-3">
+              <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
+              <Input label="นามสกุลเด็ก" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
+              <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
+              <Input label="ชื่อผู้ปกครอง" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} />
+              <Input label="เบอร์โทรผู้ปกครอง" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} />
+              <Input label="รหัสคิว (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
+              <Input label="วันนัดฉีดวัคซีน" type="date" value={form.appointmentDate} onChange={(v) => setForm({ ...form, appointmentDate: v })} />
+              <Input label="ชื่อวัคซีน" value={form.vaccineName} onChange={(v) => setForm({ ...form, vaccineName: v })} />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-[#E5ECE9] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-[#F7FAF9] text-[#5B7B73] text-left text-xs uppercase tracking-wide">
-              <tr>
-                <th className="px-5 py-3 font-medium">ชื่อเด็ก</th>
-                <th className="px-5 py-3 font-medium">รหัสคิว</th>
-                <th className="px-5 py-3 font-medium">สถานะ</th>
-                <th className="px-5 py-3 font-medium">LINE</th>
-                <th className="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
+              {formError && <p className="col-span-2 text-sm text-[#B3452E]">{formError}</p>}
+
+              <div className="col-span-2 flex justify-end gap-2 mt-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+                >
+                  {saving ? "กำลังบันทึก..." : "บันทึก"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="relative mb-4">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8FAAA2]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ค้นหาชื่อเด็กหรือรหัสคิว..."
+              className="w-full rounded-xl border border-[#E5ECE9] bg-white pl-10 pr-4 py-2.5 text-sm text-[#1E3D36] placeholder:text-[#A9BDB6] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+            />
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-[#E5ECE9] overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-[#F7FAF9] text-[#5B7B73] text-left text-xs uppercase tracking-wide">
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#5B7B73]">
-                    กำลังโหลด...
-                  </td>
+                  <th className="px-5 py-3 font-medium">ชื่อเด็ก</th>
+                  <th className="px-5 py-3 font-medium">รหัสคิว</th>
+                  <th className="px-5 py-3 font-medium">สถานะ</th>
+                  <th className="px-5 py-3 font-medium">LINE</th>
+                  <th className="px-5 py-3"></th>
                 </tr>
-              )}
-              {!loading && filteredPatients.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#5B7B73]">
-                    {search ? "ไม่พบข้อมูลที่ค้นหา" : "ยังไม่มีข้อมูลเด็ก"}
-                  </td>
-                </tr>
-              )}
-              {filteredPatients.map((p) => {
-                const badge = BADGE_STYLE[p.badge];
-                return (
-                  <tr
-                    key={p.id}
-                    onClick={() => setDrawerPatientId(p.id)}
-                    className="border-t border-[#EFF4F2] cursor-pointer hover:bg-[#FAFCFB] transition-colors"
-                  >
-                    <td className="px-5 py-3.5 text-[#1E3D36] font-medium">
-                      {p.first_name} {p.last_name}
-                    </td>
-                    <td className="px-5 py-3.5 text-[#1E3D36]">{p.queue_code ?? "-"}</td>
-                    <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${badge.className}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
-                        {badge.label}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {p.linked ? (
-                        <span className="text-[#2F6F62] font-medium">เชื่อมแล้ว</span>
-                      ) : (
-                        <span className="text-[#A9BDB6]">ยังไม่เชื่อม</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-[#A9BDB6]">
-                      <ChevronRight size={16} />
+              </thead>
+              <tbody>
+                {loading && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-[#5B7B73]">
+                      กำลังโหลด...
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                )}
+                {!loading && filteredPatients.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-[#5B7B73]">
+                      {search ? "ไม่พบข้อมูลที่ค้นหา" : "ยังไม่มีข้อมูลเด็ก"}
+                    </td>
+                  </tr>
+                )}
+                {filteredPatients.map((p) => {
+                  const badge = BADGE_STYLE[p.badge];
+                  return (
+                    <tr
+                      key={p.id}
+                      onClick={() => setModalPatientId(p.id)}
+                      className="border-t border-[#EFF4F2] cursor-pointer hover:bg-[#FAFCFB] transition-colors"
+                    >
+                      <td className="px-5 py-3.5 text-[#1E3D36] font-medium">
+                        {p.first_name} {p.last_name}
+                      </td>
+                      <td className="px-5 py-3.5 text-[#1E3D36]">{p.queue_code ?? "-"}</td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${badge.className}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+                          {badge.label}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {p.linked ? (
+                          <span className="text-[#2F6F62] font-medium">เชื่อมแล้ว</span>
+                        ) : (
+                          <span className="text-[#A9BDB6]">ยังไม่เชื่อม</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-[#A9BDB6]">
+                        <ChevronRight size={16} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </main>
 
-      <PatientDrawer
-        patient={drawerPatient}
-        open={drawerPatientId !== null}
-        onClose={() => setDrawerPatientId(null)}
+      <PatientModal
+        patient={modalPatient}
+        open={modalPatientId !== null}
+        onClose={() => setModalPatientId(null)}
         onChanged={loadPatients}
       />
-    </main>
+    </div>
   );
 }
 
-function IconButton({
-  children,
-  icon,
-  onClick,
-  disabled,
-  primary,
+function Sidebar({
+  open,
+  onToggle,
+  onNotify,
+  notifying,
+  onAddChild,
+  onAddUser,
+  onLogout,
 }: {
-  children: React.ReactNode;
+  open: boolean;
+  onToggle: () => void;
+  onNotify: () => void;
+  notifying: boolean;
+  onAddChild: () => void;
+  onAddUser: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <aside
+      className={`shrink-0 bg-[#152D28] text-white flex flex-col transition-all duration-200 ${
+        open ? "w-56" : "w-16"
+      }`}
+    >
+      <div className={`flex items-center h-16 px-4 ${open ? "justify-between" : "justify-center"}`}>
+        {open && (
+          <div className="flex items-center gap-2">
+            <Syringe size={18} className="text-[#7FD8B8]" />
+            <span className="font-semibold text-sm">วัคซีนคลินิก</span>
+          </div>
+        )}
+        <button onClick={onToggle} className="text-[#9DBDB4] hover:text-white p-1">
+          {open ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
+        </button>
+      </div>
+
+      <nav className="flex-1 px-2 space-y-1 mt-2">
+        <SidebarItem open={open} icon={<Bell size={18} />} label={notifying ? "กำลังส่ง..." : "ส่งแจ้งเตือนตอนนี้"} onClick={onNotify} highlight />
+        <SidebarItem open={open} icon={<UserPlus size={18} />} label="เพิ่มเด็ก" onClick={onAddChild} />
+        <SidebarItem open={open} icon={<ShieldPlus size={18} />} label="ผู้ใช้แอดมิน" onClick={onAddUser} />
+      </nav>
+
+      <div className="px-2 pb-4">
+        <SidebarItem open={open} icon={<LogOut size={18} />} label="ออกจากระบบ" onClick={onLogout} />
+      </div>
+    </aside>
+  );
+}
+
+function SidebarItem({
+  open,
+  icon,
+  label,
+  onClick,
+  highlight,
+}: {
+  open: boolean;
   icon: React.ReactNode;
+  label: string;
   onClick: () => void;
-  disabled?: boolean;
-  primary?: boolean;
+  highlight?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      disabled={disabled}
-      className={`flex items-center gap-1.5 rounded-lg text-sm font-medium px-3.5 py-2 disabled:opacity-60 transition-colors ${
-        primary
-          ? "bg-[#2F6F62] text-white hover:bg-[#285F54]"
-          : "border border-[#D8E5E0] text-[#2F6F62] hover:bg-[#EEF5F2]"
-      }`}
+      title={open ? undefined : label}
+      className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+        highlight ? "bg-[#2F6F62] text-white hover:bg-[#285F54]" : "text-[#C7DAD4] hover:bg-white/10 hover:text-white"
+      } ${open ? "justify-start" : "justify-center"}`}
     >
       {icon}
-      {children}
+      {open && <span className="truncate">{label}</span>}
     </button>
   );
 }
 
-function PatientDrawer({
+function PatientModal({
   patient,
   open,
   onClose,
@@ -386,14 +429,14 @@ function PatientDrawer({
   onChanged: () => void;
 }) {
   return (
-    <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
       <div
-        className={`absolute inset-0 bg-[#0F241F]/35 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
       />
       <div
-        className={`absolute left-0 top-0 h-full w-full max-w-md bg-white shadow-2xl overflow-y-auto transition-transform duration-200 ease-out ${
-          open ? "translate-x-0" : "-translate-x-full"
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto transition-all duration-150 ${
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95"
         }`}
       >
         {patient && (
