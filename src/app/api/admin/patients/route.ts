@@ -1,10 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+type Appt = {
+  id: string;
+  patient_id: string;
+  appointment_date: string;
+  vaccine_name: string;
+  status: string;
+  received_date: string | null;
+};
+
+function computeBadge(appointments: Appt[]): "urgent" | "warning" | "normal" {
+  const today = new Date().toISOString().slice(0, 10);
+  const soon = new Date();
+  soon.setDate(soon.getDate() + 3);
+  const soonStr = soon.toISOString().slice(0, 10);
+
+  const active = appointments.filter((a) => a.status !== "completed");
+
+  const overdue = active.some((a) => a.appointment_date < today);
+  if (overdue) return "urgent";
+
+  const upcomingSoon = active.some(
+    (a) => a.appointment_date >= today && a.appointment_date <= soonStr
+  );
+  if (upcomingSoon) return "warning";
+
+  return "normal";
+}
+
 export async function GET() {
   const { data: patients, error: patientsError } = await supabaseAdmin
     .from("patients")
-    .select("id, first_name, last_name, guardian_name, guardian_phone, queue_code, created_at")
+    .select("id, first_name, last_name, guardian_name, guardian_phone, queue_code, date_of_birth, created_at")
     .order("created_at", { ascending: false });
 
   if (patientsError) {
@@ -13,20 +41,21 @@ export async function GET() {
 
   const { data: appointments } = await supabaseAdmin
     .from("appointments")
-    .select("id, patient_id, appointment_date, vaccine_name, status")
+    .select("id, patient_id, appointment_date, vaccine_name, status, received_date")
     .order("appointment_date", { ascending: true });
 
-  const { data: links } = await supabaseAdmin
-    .from("line_links")
-    .select("patient_id");
-
+  const { data: links } = await supabaseAdmin.from("line_links").select("patient_id");
   const linkedPatientIds = new Set((links ?? []).map((l) => l.patient_id));
 
-  const result = (patients ?? []).map((p) => ({
-    ...p,
-    linked: linkedPatientIds.has(p.id),
-    appointments: (appointments ?? []).filter((a) => a.patient_id === p.id),
-  }));
+  const result = (patients ?? []).map((p) => {
+    const patientAppointments = (appointments ?? []).filter((a) => a.patient_id === p.id);
+    return {
+      ...p,
+      linked: linkedPatientIds.has(p.id),
+      appointments: patientAppointments,
+      badge: computeBadge(patientAppointments),
+    };
+  });
 
   return NextResponse.json({ patients: result });
 }
