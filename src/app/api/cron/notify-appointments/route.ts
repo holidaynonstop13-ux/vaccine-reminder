@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await sendTodaysReminders();
+    const result = await sendTodaysReminders({ respectPause: true });
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";

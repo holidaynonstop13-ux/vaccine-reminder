@@ -10,10 +10,13 @@ type Appt = {
   received_date: string | null;
 };
 
-function computeBadge(appointments: Appt[]): "urgent" | "warning" | "normal" {
+function computeBadge(
+  appointments: Appt[],
+  leadDays: number
+): "urgent" | "warning" | "normal" {
   const today = new Date().toISOString().slice(0, 10);
   const soon = new Date();
-  soon.setDate(soon.getDate() + 3);
+  soon.setDate(soon.getDate() + leadDays);
   const soonStr = soon.toISOString().slice(0, 10);
 
   const active = appointments.filter((a) => a.status !== "completed");
@@ -47,13 +50,20 @@ export async function GET() {
   const { data: links } = await supabaseAdmin.from("line_links").select("patient_id");
   const linkedPatientIds = new Set((links ?? []).map((l) => l.patient_id));
 
+  const { data: leadSetting } = await supabaseAdmin
+    .from("settings")
+    .select("value")
+    .eq("key", "reminder_lead_days")
+    .maybeSingle();
+  const leadDays = parseInt(leadSetting?.value ?? "3", 10) || 3;
+
   const result = (patients ?? []).map((p) => {
     const patientAppointments = (appointments ?? []).filter((a) => a.patient_id === p.id);
     return {
       ...p,
       linked: linkedPatientIds.has(p.id),
       appointments: patientAppointments,
-      badge: computeBadge(patientAppointments),
+      badge: computeBadge(patientAppointments, leadDays),
     };
   });
 

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+const DEFAULT_TEMPLATE =
+  "📌 ติดตามนัดวัคซีน\n\nน้อง{childName}\nนัดวันที่: {appointmentDate}\nวัคซีน: {vaccineName}\nสถานที่: {clinicName}\n\nกรุณาพาน้องมารับวัคซีนโดยเร็วค่ะ หากมีข้อสงสัยติดต่อคลินิกได้โดยตรง";
+
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -33,8 +36,19 @@ export async function POST(
     return NextResponse.json({ error: "เด็กคนนี้ยังไม่ได้ผูกบัญชี LINE" }, { status: 400 });
   }
 
-  const clinicName = process.env.CLINIC_NAME || "คลินิก";
-  const text = `📌 ติดตามนัดวัคซีน\n\nน้อง${patient.first_name} ${patient.last_name}\nนัดวันที่: ${appt.appointment_date}\nวัคซีน: ${appt.vaccine_name}\nสถานที่: ${clinicName}\n\nกรุณาพาน้องมารับวัคซีนโดยเร็วค่ะ หากมีข้อสงสัยติดต่อคลินิกได้โดยตรง`;
+  const { data: settingsRows } = await supabaseAdmin
+    .from("settings")
+    .select("key, value")
+    .in("key", ["clinic_name"]);
+  const clinicName =
+    (settingsRows ?? []).find((s) => s.key === "clinic_name")?.value ||
+    process.env.CLINIC_NAME ||
+    "คลินิก";
+
+  const text = DEFAULT_TEMPLATE.replaceAll("{childName}", `${patient.first_name} ${patient.last_name}`)
+    .replaceAll("{appointmentDate}", appt.appointment_date)
+    .replaceAll("{vaccineName}", appt.vaccine_name)
+    .replaceAll("{clinicName}", clinicName);
 
   const res = await fetch("https://api.line.me/v2/bot/message/push", {
     method: "POST",

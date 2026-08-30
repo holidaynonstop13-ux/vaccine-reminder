@@ -18,6 +18,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Syringe,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 type Appointment = {
@@ -67,6 +68,7 @@ export default function AdminPage() {
   const [notifyResult, setNotifyResult] = useState<string | null>(null);
   const [notifying, setNotifying] = useState(false);
   const [modalPatientId, setModalPatientId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const [showUserForm, setShowUserForm] = useState(false);
   const [newUser, setNewUser] = useState({ username: "", password: "" });
@@ -197,6 +199,7 @@ export default function AdminPage() {
         notifying={notifying}
         onAddChild={() => setShowForm((v) => !v)}
         onAddUser={() => setShowUserForm((v) => !v)}
+        onSettings={() => setShowSettings(true)}
         onLogout={handleLogout}
       />
 
@@ -338,6 +341,8 @@ export default function AdminPage() {
         onClose={() => setModalPatientId(null)}
         onChanged={loadPatients}
       />
+
+      <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 }
@@ -349,6 +354,7 @@ function Sidebar({
   notifying,
   onAddChild,
   onAddUser,
+  onSettings,
   onLogout,
 }: {
   open: boolean;
@@ -357,6 +363,7 @@ function Sidebar({
   notifying: boolean;
   onAddChild: () => void;
   onAddUser: () => void;
+  onSettings: () => void;
   onLogout: () => void;
 }) {
   return (
@@ -381,6 +388,7 @@ function Sidebar({
         <SidebarItem open={open} icon={<Bell size={18} />} label={notifying ? "กำลังส่ง..." : "ส่งแจ้งเตือนตอนนี้"} onClick={onNotify} highlight />
         <SidebarItem open={open} icon={<UserPlus size={18} />} label="เพิ่มเด็ก" onClick={onAddChild} />
         <SidebarItem open={open} icon={<ShieldPlus size={18} />} label="ผู้ใช้แอดมิน" onClick={onAddUser} />
+        <SidebarItem open={open} icon={<SettingsIcon size={18} />} label="ตั้งค่า" onClick={onSettings} />
       </nav>
 
       <div className="px-2 pb-4">
@@ -414,6 +422,148 @@ function SidebarItem({
       {icon}
       {open && <span className="truncate">{label}</span>}
     </button>
+  );
+}
+
+function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [values, setValues] = useState({
+    clinic_name: "",
+    message_template: "",
+    reminder_lead_days: "3",
+    auto_send_enabled: "true",
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    setSaved(false);
+    fetch("/api/admin/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setValues(data.settings);
+        setLoading(false);
+      });
+  }, [open]);
+
+  async function handleSave() {
+    setSaving(true);
+    setSaved(false);
+    await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+    setSaving(false);
+    setSaved(true);
+  }
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
+      <div
+        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={onClose}
+      />
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto transition-all duration-150 ${
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        }`}
+      >
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-6">
+            <h2 className="text-lg font-semibold text-[#152D28]">ตั้งค่าระบบ</h2>
+            <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+              <X size={20} />
+            </button>
+          </div>
+
+          {loading ? (
+            <p className="text-sm text-[#5B7B73]">กำลังโหลด...</p>
+          ) : (
+            <div className="space-y-5">
+              <div>
+                <span className="text-sm text-[#1E3D36] font-medium">ชื่อคลินิก/สถานที่</span>
+                <input
+                  value={values.clinic_name}
+                  onChange={(e) => setValues({ ...values, clinic_name: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                />
+                <p className="text-xs text-[#8FAAA2] mt-1">ใช้แทน {"{clinicName}"} ในข้อความแจ้งเตือน</p>
+              </div>
+
+              <div>
+                <span className="text-sm text-[#1E3D36] font-medium">ข้อความแจ้งเตือน</span>
+                <textarea
+                  value={values.message_template}
+                  onChange={(e) => setValues({ ...values, message_template: e.target.value })}
+                  rows={6}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] text-sm focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                />
+                <p className="text-xs text-[#8FAAA2] mt-1">
+                  ตัวแปรที่ใช้ได้: {"{childName}"} {"{vaccineName}"} {"{appointmentDate}"} {"{clinicName}"}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-sm text-[#1E3D36] font-medium">แจ้งเตือนล่วงหน้า (วัน) สำหรับสถานะ &quot;ใกล้นัด&quot;</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={30}
+                  value={values.reminder_lead_days}
+                  onChange={(e) => setValues({ ...values, reminder_lead_days: e.target.value })}
+                  className="mt-1 w-24 rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3">
+                <div>
+                  <p className="text-sm text-[#1E3D36] font-medium">เปิดใช้งานการส่งแจ้งเตือนอัตโนมัติทุกวัน</p>
+                  <p className="text-xs text-[#8FAAA2] mt-0.5">ปิดชั่วคราวได้ เช่น ช่วงคลินิกหยุด (ปุ่ม &quot;ส่งแจ้งเตือนตอนนี้&quot; ยังใช้ได้ตามปกติ)</p>
+                </div>
+                <button
+                  onClick={() =>
+                    setValues({
+                      ...values,
+                      auto_send_enabled: values.auto_send_enabled === "true" ? "false" : "true",
+                    })
+                  }
+                  className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                    values.auto_send_enabled === "true" ? "bg-[#2F6F62]" : "bg-[#D8E5E0]"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                      values.auto_send_enabled === "true" ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3">
+                <p className="text-sm text-[#1E3D36] font-medium">เวลาส่งอัตโนมัติ: 07:00 น. ทุกวัน</p>
+                <p className="text-xs text-[#8FAAA2] mt-0.5">
+                  เปลี่ยนเวลานี้ต้องแจ้งผู้พัฒนาระบบ เนื่องจากข้อจำกัดของแพ็กเกจ Vercel ที่ใช้อยู่
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-1">
+                {saved && <span className="text-sm text-[#2F6F62]">บันทึกแล้ว</span>}
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+                >
+                  {saving ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
