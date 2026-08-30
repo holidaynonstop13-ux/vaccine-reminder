@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
+  Bell,
+  UserPlus,
   X,
   Pencil,
   Trash2,
@@ -50,6 +52,23 @@ const BADGE_STYLE: Record<Patient["badge"], { label: string; dot: string; classN
   urgent: { label: "ขาดนัด", dot: "bg-[#C24E36]", className: "bg-[#FBE4E0] text-[#B3452E]" },
 };
 
+function calculateAge(dob: string) {
+  if (!dob) return "-";
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return "-";
+  const now = new Date();
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  if (now.getDate() < birth.getDate()) months--;
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (years <= 0) return `${months} เดือน`;
+  if (months === 0) return `${years} ปี`;
+  return `${years} ปี ${months} เดือน`;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -57,7 +76,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const [showForm, setShowForm] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [notifyResult, setNotifyResult] = useState<string | null>(null);
@@ -132,7 +151,7 @@ export default function AdminPage() {
       appointmentDate: "",
       vaccineName: "",
     });
-    setShowForm(false);
+    setShowAddModal(false);
     setSaving(false);
     loadPatients();
   }
@@ -189,21 +208,30 @@ export default function AdminPage() {
       <AdminSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
-        onNotify={handleNotifyNow}
-        notifying={notifying}
-        onAddChild={() => setShowForm((v) => !v)}
+        onChildren={() => {}}
         onAddUser={() => setShowUserForm((v) => !v)}
         onSettings={() => router.push("/admin/settings")}
         onLogout={handleLogout}
+        activeItem="children"
       />
 
       <main className="flex-1 min-w-0">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-[#152D28] tracking-tight">
-              ระบบจัดการวัคซีน
-            </h1>
-            <p className="text-sm text-[#5B7B73] mt-0.5">เด็กทั้งหมด {patients.length} คน</p>
+        <div className="max-w-5xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold text-[#152D28] tracking-tight">
+                ระบบจัดการวัคซีน
+              </h1>
+              <p className="text-sm text-[#5B7B73] mt-0.5">เด็กทั้งหมด {patients.length} คน</p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <IconButton onClick={handleNotifyNow} disabled={notifying} icon={<Bell size={16} />} primary>
+                {notifying ? "กำลังส่ง..." : "ส่งแจ้งเตือนตอนนี้"}
+              </IconButton>
+              <IconButton onClick={() => setShowAddModal(true)} icon={<UserPlus size={16} />}>
+                เพิ่มเด็ก
+              </IconButton>
+            </div>
           </div>
 
           {notifyResult && (
@@ -228,31 +256,6 @@ export default function AdminPage() {
               </button>
               {userError && <p className="w-full text-sm text-[#B3452E]">{userError}</p>}
               {userSuccess && <p className="w-full text-sm text-[#2F6F62]">{userSuccess}</p>}
-            </form>
-          )}
-
-          {showForm && (
-            <form onSubmit={handleAdd} className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#E5ECE9] grid grid-cols-2 gap-3">
-              <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
-              <Input label="นามสกุลเด็ก" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
-              <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
-              <Input label="ชื่อผู้ปกครอง" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} />
-              <Input label="เบอร์โทรผู้ปกครอง" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} />
-              <Input label="รหัสคิว (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
-              <Input label="วันนัดฉีดวัคซีน" type="date" value={form.appointmentDate} onChange={(v) => setForm({ ...form, appointmentDate: v })} />
-              <Input label="ชื่อวัคซีน" value={form.vaccineName} onChange={(v) => setForm({ ...form, vaccineName: v })} />
-
-              {formError && <p className="col-span-2 text-sm text-[#B3452E]">{formError}</p>}
-
-              <div className="col-span-2 flex justify-end gap-2 mt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
-                >
-                  {saving ? "กำลังบันทึก..." : "บันทึก"}
-                </button>
-              </div>
             </form>
           )}
 
@@ -329,12 +332,126 @@ export default function AdminPage() {
         </div>
       </main>
 
+      <AddPatientModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        form={form}
+        setForm={setForm}
+        onSubmit={handleAdd}
+        saving={saving}
+        error={formError}
+      />
+
       <PatientModal
         patient={modalPatient}
         open={modalPatientId !== null}
         onClose={() => setModalPatientId(null)}
         onChanged={loadPatients}
       />
+    </div>
+  );
+}
+
+function IconButton({
+  children,
+  icon,
+  onClick,
+  disabled,
+  primary,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-1.5 rounded-lg text-sm font-medium px-3.5 py-2 disabled:opacity-60 transition-colors ${
+        primary
+          ? "bg-[#2F6F62] text-white hover:bg-[#285F54]"
+          : "border border-[#D8E5E0] text-[#2F6F62] hover:bg-[#EEF5F2]"
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+type FormState = {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  guardianName: string;
+  guardianPhone: string;
+  queueCode: string;
+  appointmentDate: string;
+  vaccineName: string;
+};
+
+function AddPatientModal({
+  open,
+  onClose,
+  form,
+  setForm,
+  onSubmit,
+  saving,
+  error,
+}: {
+  open: boolean;
+  onClose: () => void;
+  form: FormState;
+  setForm: (f: FormState) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  saving: boolean;
+  error: string;
+}) {
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
+      <div
+        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={onClose}
+      />
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto transition-all duration-150 ${
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        }`}
+      >
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-6">
+            <h2 className="text-lg font-semibold text-[#152D28]">เพิ่มเด็ก</h2>
+            <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+              <X size={20} />
+            </button>
+          </div>
+
+          <form onSubmit={onSubmit} className="grid grid-cols-2 gap-3">
+            <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
+            <Input label="นามสกุลเด็ก" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
+            <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
+            <Input label="ชื่อผู้ปกครอง" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} />
+            <Input label="เบอร์โทรผู้ปกครอง" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} />
+            <Input label="รหัสคิว (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
+            <Input label="วันนัดฉีดวัคซีน" type="date" value={form.appointmentDate} onChange={(v) => setForm({ ...form, appointmentDate: v })} />
+            <Input label="ชื่อวัคซีน" value={form.vaccineName} onChange={(v) => setForm({ ...form, vaccineName: v })} />
+
+            {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
+
+            <div className="col-span-2 flex justify-end gap-2 mt-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+              >
+                {saving ? "กำลังบันทึก..." : "บันทึก"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
@@ -492,7 +609,9 @@ function PatientDetail({
         <div className="rounded-xl bg-[#F7FAF9] border border-[#E5ECE9] p-4">
           <div className="text-sm text-[#5B7B73] space-y-0.5 mb-3">
             <div>ผู้ปกครอง: {patient.guardian_name} · {patient.guardian_phone}</div>
-            <div>วันเกิด: {patient.date_of_birth}</div>
+            <div>
+              วันเกิด: {patient.date_of_birth} · อายุ {calculateAge(patient.date_of_birth)}
+            </div>
             <div>
               LINE:{" "}
               {patient.linked ? (

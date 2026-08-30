@@ -8,8 +8,6 @@ import { AdminSidebar } from "@/components/admin-sidebar";
 export default function SettingsPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notifying, setNotifying] = useState(false);
-  const [notifyResult, setNotifyResult] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,23 +40,6 @@ export default function SettingsPage() {
     setSaved(true);
   }
 
-  async function handleNotifyNow() {
-    setNotifying(true);
-    setNotifyResult(null);
-    const res = await fetch("/api/admin/notify-now", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) {
-      setNotifyResult(`เกิดข้อผิดพลาด: ${data.error}`);
-    } else if (data.total === 0) {
-      setNotifyResult("ไม่มีนัดหมายวันนี้");
-    } else {
-      setNotifyResult(
-        `ส่งสำเร็จ ${data.sent} ราย · ไม่ได้ผูกบัญชี ${data.skippedNoLink} ราย · ล้มเหลว ${data.failed} ราย`
-      );
-    }
-    setNotifying(false);
-  }
-
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
@@ -69,9 +50,7 @@ export default function SettingsPage() {
       <AdminSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
-        onNotify={handleNotifyNow}
-        notifying={notifying}
-        onAddChild={() => router.push("/admin")}
+        onChildren={() => router.push("/admin")}
         onAddUser={() => router.push("/admin")}
         onSettings={() => {}}
         onLogout={handleLogout}
@@ -88,12 +67,6 @@ export default function SettingsPage() {
           </button>
 
           <h1 className="text-2xl font-semibold text-[#152D28] tracking-tight mb-6">ตั้งค่าระบบ</h1>
-
-          {notifyResult && (
-            <div className="mb-4 rounded-xl bg-white px-4 py-3 text-sm text-[#1E3D36] shadow-sm border border-[#E5ECE9]">
-              {notifyResult}
-            </div>
-          )}
 
           {loading ? (
             <p className="text-sm text-[#5B7B73]">กำลังโหลด...</p>
