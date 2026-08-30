@@ -51,7 +51,7 @@ export default function SettingsPage() {
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
         onChildren={() => router.push("/admin")}
-        onAddUser={() => router.push("/admin")}
+        onUsers={() => router.push("/admin/users")}
         onSettings={() => {}}
         onLogout={handleLogout}
         activeItem="settings"

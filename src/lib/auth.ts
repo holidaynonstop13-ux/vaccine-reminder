@@ -4,14 +4,6 @@ function toHex(buffer: ArrayBuffer) {
     .join("");
 }
 
-function fromHex(hex: string) {
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  }
-  return bytes;
-}
-
 export function generateSalt() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return toHex(bytes.buffer as ArrayBuffer);
@@ -46,31 +38,34 @@ function base64UrlToBytes(b64url: string) {
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
-export async function createSessionCookie(username: string) {
+export type Role = "admin" | "staff";
+
+export async function createSessionCookie(username: string, role: Role) {
   const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7; // 7 days
-  const payload = `${username}.${exp}`;
+  const payload = `${username}.${role}.${exp}`;
   const key = await getSigningKey();
   const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
   return `${payload}.${base64UrlEncode(sig)}`;
 }
 
-export async function verifySessionCookie(value: string | undefined) {
+export async function verifySessionCookie(
+  value: string | undefined
+): Promise<{ username: string; role: Role } | null> {
   if (!value) return null;
   const parts = value.split(".");
-  if (parts.length !== 3) return null;
-  const [username, expStr, sigB64] = parts;
+  if (parts.length !== 4) return null;
+  const [username, role, expStr, sigB64] = parts;
   const exp = parseInt(expStr, 10);
   if (!exp || Date.now() / 1000 > exp) return null;
+  if (role !== "admin" && role !== "staff") return null;
 
   const key = await getSigningKey();
-  const payload = `${username}.${expStr}`;
+  const payload = `${username}.${role}.${expStr}`;
   const valid = await crypto.subtle.verify(
     "HMAC",
     key,
     base64UrlToBytes(sigB64),
     new TextEncoder().encode(payload)
   );
-  return valid ? username : null;
+  return valid ? { username, role } : null;
 }
-
-export { fromHex };

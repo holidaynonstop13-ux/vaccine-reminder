@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Users,
   ShieldPlus,
@@ -14,7 +15,7 @@ export function AdminSidebar({
   open,
   onToggle,
   onChildren,
-  onAddUser,
+  onUsers,
   onSettings,
   onLogout,
   activeItem,
@@ -22,11 +23,19 @@ export function AdminSidebar({
   open: boolean;
   onToggle: () => void;
   onChildren: () => void;
-  onAddUser: () => void;
+  onUsers: () => void;
   onSettings: () => void;
   onLogout: () => void;
-  activeItem?: "children" | "settings";
+  activeItem?: "children" | "settings" | "users";
 }) {
+  const [role, setRole] = useState<"admin" | "staff" | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setRole(data?.role ?? null));
+  }, []);
+
   return (
     <aside
       className={`shrink-0 bg-[#152D28] text-white flex flex-col transition-all duration-200 ${
@@ -47,8 +56,12 @@ export function AdminSidebar({
 
       <nav className="flex-1 px-2 space-y-1 mt-2">
         <SidebarItem open={open} icon={<Users size={18} />} label="ข้อมูลเด็ก" onClick={onChildren} active={activeItem === "children"} />
-        <SidebarItem open={open} icon={<ShieldPlus size={18} />} label="ผู้ใช้แอดมิน" onClick={onAddUser} />
-        <SidebarItem open={open} icon={<SettingsIcon size={18} />} label="ตั้งค่า" onClick={onSettings} active={activeItem === "settings"} />
+        {role === "admin" && (
+          <>
+            <SidebarItem open={open} icon={<ShieldPlus size={18} />} label="ผู้ใช้แอดมิน" onClick={onUsers} active={activeItem === "users"} />
+            <SidebarItem open={open} icon={<SettingsIcon size={18} />} label="ตั้งค่า" onClick={onSettings} active={activeItem === "settings"} />
+          </>
+        )}
       </nav>
 
       <div className="px-2 pb-4">

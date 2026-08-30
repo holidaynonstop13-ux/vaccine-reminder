@@ -93,11 +93,6 @@ export default function AdminPage() {
   const [notifying, setNotifying] = useState(false);
   const [modalPatientId, setModalPatientId] = useState<string | null>(null);
 
-  const [showUserForm, setShowUserForm] = useState(false);
-  const [newUser, setNewUser] = useState({ username: "", password: "" });
-  const [userError, setUserError] = useState("");
-  const [userSaving, setUserSaving] = useState(false);
-  const [userSuccess, setUserSuccess] = useState("");
 
   const [form, setForm] = useState({
     firstName: "",
@@ -184,30 +179,6 @@ export default function AdminPage() {
     loadPatients();
   }
 
-  async function handleAddUser(e: React.FormEvent) {
-    e.preventDefault();
-    setUserSaving(true);
-    setUserError("");
-    setUserSuccess("");
-
-    const res = await fetch("/api/admin/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newUser),
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      setUserError(data.error ?? "เพิ่มผู้ใช้ไม่สำเร็จ");
-      setUserSaving(false);
-      return;
-    }
-
-    setUserSuccess(`เพิ่มผู้ใช้ "${newUser.username}" สำเร็จ`);
-    setNewUser({ username: "", password: "" });
-    setUserSaving(false);
-  }
-
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
@@ -219,7 +190,7 @@ export default function AdminPage() {
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
         onChildren={() => {}}
-        onAddUser={() => setShowUserForm((v) => !v)}
+        onUsers={() => router.push("/admin/users")}
         onSettings={() => router.push("/admin/settings")}
         onLogout={handleLogout}
         activeItem="children"
@@ -248,25 +219,6 @@ export default function AdminPage() {
             <div className="mb-4 rounded-xl bg-white px-4 py-3 text-sm text-[#1E3D36] shadow-sm border border-[#E5ECE9]">
               {notifyResult}
             </div>
-          )}
-
-          {showUserForm && (
-            <form
-              onSubmit={handleAddUser}
-              className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#E5ECE9] flex gap-3 items-end flex-wrap"
-            >
-              <Input label="ชื่อผู้ใช้ใหม่" value={newUser.username} onChange={(v) => setNewUser({ ...newUser, username: v })} />
-              <Input label="รหัสผ่าน (8 ตัวขึ้นไป)" type="password" value={newUser.password} onChange={(v) => setNewUser({ ...newUser, password: v })} />
-              <button
-                type="submit"
-                disabled={userSaving}
-                className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
-              >
-                {userSaving ? "กำลังบันทึก..." : "เพิ่มผู้ใช้"}
-              </button>
-              {userError && <p className="w-full text-sm text-[#B3452E]">{userError}</p>}
-              {userSuccess && <p className="w-full text-sm text-[#2F6F62]">{userSuccess}</p>}
-            </form>
           )}
 
           <div className="relative mb-4">

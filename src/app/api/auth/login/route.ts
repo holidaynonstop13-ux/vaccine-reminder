@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { hashPassword, createSessionCookie } from "@/lib/auth";
+import { hashPassword, createSessionCookie, Role } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     const { data: user, error: queryError } = await supabaseAdmin
       .from("admin_users")
-      .select("username, password_hash, salt")
+      .select("username, password_hash, salt, role")
       .eq("username", username)
       .maybeSingle();
 
@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "รหัสผ่านไม่ถูกต้อง" }, { status: 401 });
     }
 
-    const cookieValue = await createSessionCookie(user.username);
+    const role = (user.role as Role) || "staff";
+    const cookieValue = await createSessionCookie(user.username, role);
     const res = NextResponse.json({ success: true });
     res.cookies.set("admin_session", cookieValue, {
       httpOnly: true,
