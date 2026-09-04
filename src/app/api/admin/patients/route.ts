@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     vaccineName,
   } = body;
 
-  if (!firstName || !lastName || !dateOfBirth || !guardianName || !guardianPhone || !queueCode) {
+  if (!firstName || !lastName || !dateOfBirth || !queueCode || !address) {
     return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 });
   }
 
@@ -93,8 +93,8 @@ export async function POST(req: NextRequest) {
       first_name: firstName,
       last_name: lastName,
       date_of_birth: dateOfBirth,
-      guardian_name: guardianName,
-      guardian_phone: guardianPhone,
+      guardian_name: guardianName || null,
+      guardian_phone: guardianPhone || null,
       queue_code: queueCode.trim().toUpperCase(),
       address: address || null,
     })

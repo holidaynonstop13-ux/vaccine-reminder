@@ -6,6 +6,7 @@ import {
   Search,
   Bell,
   UserPlus,
+  Upload,
   X,
   Pencil,
   Trash2,
@@ -17,6 +18,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import * as XLSX from "xlsx";
 
 type Appointment = {
   id: string;
@@ -30,8 +32,8 @@ type Patient = {
   id: string;
   first_name: string;
   last_name: string;
-  guardian_name: string;
-  guardian_phone: string;
+  guardian_name: string | null;
+  guardian_phone: string | null;
   queue_code: string | null;
   date_of_birth: string;
   address: string | null;
@@ -89,6 +91,7 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [notifyResult, setNotifyResult] = useState<string | null>(null);
@@ -211,6 +214,9 @@ export default function AdminPage() {
               <IconButton onClick={() => setShowAddModal(true)} icon={<UserPlus size={16} />}>
                 เพิ่มเด็ก
               </IconButton>
+              <IconButton onClick={() => setShowImportModal(true)} icon={<Upload size={16} />}>
+                นำเข้าจาก Excel
+              </IconButton>
             </div>
           </div>
 
@@ -301,6 +307,12 @@ export default function AdminPage() {
         onSubmit={handleAdd}
         saving={saving}
         error={formError}
+      />
+
+      <ImportModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImported={loadPatients}
       />
 
       <PatientModal
@@ -395,11 +407,11 @@ function AddPatientModal({
             <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
             <Input label="นามสกุลเด็ก" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
             <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
-            <Input label="ชื่อผู้ปกครอง" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} />
-            <Input label="เบอร์โทรผู้ปกครอง" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} />
+            <Input label="ชื่อผู้ปกครอง (ไม่บังคับ)" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} required={false} />
+            <Input label="เบอร์โทรผู้ปกครอง (ไม่บังคับ)" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} required={false} />
             <Input label="PID (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
             <div className="col-span-2">
-              <Input label="ที่อยู่" value={form.address} onChange={(v) => setForm({ ...form, address: v })} required={false} />
+              <Input label="ที่อยู่" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
             </div>
 
             {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
@@ -414,6 +426,209 @@ function AddPatientModal({
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImportModal({
+  open,
+  onClose,
+  onImported,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onImported: () => void;
+}) {
+  const [rows, setRows] = useState<
+    { pid: string; firstName: string; lastName: string; dateOfBirth: string; address: string; guardianName: string; guardianPhone: string }[]
+  >([]);
+  const [fileName, setFileName] = useState("");
+  const [parseError, setParseError] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [result, setResult] = useState<{ imported: number; total: number; failed: { row: number; pid: string; reason: string }[] } | null>(null);
+
+  function excelDateToISO(value: unknown): string {
+    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    if (typeof value === "number") {
+      const d = XLSX.SSF.parse_date_code(value);
+      return `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`;
+    }
+    const s = String(value ?? "").trim();
+    const parsed = new Date(s);
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+    return s;
+  }
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    setParseError("");
+    setResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = evt.target?.result;
+        const workbook = XLSX.read(data, { type: "binary", cellDates: true });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const raw: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+
+        const dataRows = raw.slice(1); // skip header row
+        const parsed = dataRows
+          .filter((r) => r.some((cell) => cell !== undefined && cell !== ""))
+          .map((r) => ({
+            pid: String(r[0] ?? "").trim(),
+            firstName: String(r[1] ?? "").trim(),
+            lastName: String(r[2] ?? "").trim(),
+            dateOfBirth: excelDateToISO(r[3]),
+            address: String(r[4] ?? "").trim(),
+            guardianName: String(r[5] ?? "").trim(),
+            guardianPhone: String(r[6] ?? "").trim(),
+          }));
+
+        setRows(parsed);
+      } catch {
+        setParseError("อ่านไฟล์ไม่สำเร็จ กรุณาตรวจสอบว่าเป็นไฟล์ .xlsx หรือ .csv ที่ถูกต้อง");
+      }
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  async function handleImport() {
+    setImporting(true);
+    const res = await fetch("/api/admin/patients/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows }),
+    });
+    const data = await res.json();
+    setResult(data);
+    setImporting(false);
+    onImported();
+  }
+
+  function downloadTemplate() {
+    const header = ["PID", "ชื่อ", "นามสกุล", "วันเกิด (YYYY-MM-DD)", "ที่อยู่", "ชื่อผู้ปกครอง", "เบอร์โทร"];
+    const example = ["A01", "สมชาย", "ใจดี", "2023-05-10", "123 หมู่ 4 ต.บ้านใหม่ อ.เมือง", "สมหญิง ใจดี", "0812345678"];
+    const ws = XLSX.utils.aoa_to_sheet([header, example]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "ข้อมูลเด็ก");
+    XLSX.writeFile(wb, "แม่แบบนำเข้าข้อมูลเด็ก.xlsx");
+  }
+
+  function handleClose() {
+    setRows([]);
+    setFileName("");
+    setParseError("");
+    setResult(null);
+    onClose();
+  }
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
+      <div
+        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={handleClose}
+      />
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto transition-all duration-150 ${
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        }`}
+      >
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-2">
+            <h2 className="text-lg font-semibold text-[#152D28]">นำเข้าข้อมูลเด็กจาก Excel</h2>
+            <button onClick={handleClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3 mb-4 text-sm text-[#5B7B73]">
+            <p className="mb-2">
+              ไฟล์ต้องมี 7 คอลัมน์ตามลำดับนี้ (แถวแรกเป็นหัวตาราง ไม่ต้องตรงชื่อเป๊ะๆ ก็ได้):
+            </p>
+            <p className="font-medium text-[#1E3D36] mb-2">
+              PID · ชื่อ · นามสกุล · วันเกิด · ที่อยู่ · ชื่อผู้ปกครอง (ไม่บังคับ) · เบอร์โทร (ไม่บังคับ)
+            </p>
+            <button onClick={downloadTemplate} className="text-[#2F6F62] font-medium hover:underline">
+              ดาวน์โหลดแม่แบบ Excel
+            </button>
+          </div>
+
+          <label className="block mb-4">
+            <span className="text-sm text-[#1E3D36] font-medium">เลือกไฟล์ (.xlsx หรือ .csv)</span>
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFile}
+              className="mt-1 w-full text-sm text-[#1E3D36]"
+            />
+            {fileName && <p className="text-xs text-[#8FAAA2] mt-1">ไฟล์ที่เลือก: {fileName}</p>}
+          </label>
+
+          {parseError && <p className="text-sm text-[#B3452E] mb-4">{parseError}</p>}
+
+          {rows.length > 0 && !result && (
+            <div className="mb-4">
+              <p className="text-sm text-[#1E3D36] font-medium mb-2">พบข้อมูล {rows.length} แถว (แสดงตัวอย่าง 5 แถวแรก)</p>
+              <div className="overflow-x-auto rounded-lg border border-[#E5ECE9]">
+                <table className="w-full text-xs">
+                  <thead className="bg-[#F7FAF9] text-[#5B7B73]">
+                    <tr>
+                      <th className="px-3 py-2 text-left">PID</th>
+                      <th className="px-3 py-2 text-left">ชื่อ-นามสกุล</th>
+                      <th className="px-3 py-2 text-left">วันเกิด</th>
+                      <th className="px-3 py-2 text-left">ที่อยู่</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.slice(0, 5).map((r, i) => (
+                      <tr key={i} className="border-t border-[#EFF4F2]">
+                        <td className="px-3 py-2">{r.pid}</td>
+                        <td className="px-3 py-2">{r.firstName} {r.lastName}</td>
+                        <td className="px-3 py-2">{r.dateOfBirth}</td>
+                        <td className="px-3 py-2">{r.address}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <button
+                onClick={handleImport}
+                disabled={importing}
+                className="mt-4 rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
+              >
+                {importing ? "กำลังนำเข้า..." : `นำเข้า ${rows.length} รายการ`}
+              </button>
+            </div>
+          )}
+
+          {result && (
+            <div className="space-y-3">
+              <div className="rounded-lg bg-[#E4F3EC] text-[#2F6F62] px-4 py-3 text-sm">
+                นำเข้าสำเร็จ {result.imported} จาก {result.total} รายการ
+              </div>
+              {result.failed.length > 0 && (
+                <div className="rounded-lg bg-[#FBE4E0] px-4 py-3 text-sm text-[#B3452E]">
+                  <p className="font-medium mb-1">รายการที่ไม่สำเร็จ ({result.failed.length}):</p>
+                  <ul className="space-y-0.5">
+                    {result.failed.map((f, i) => (
+                      <li key={i}>แถวที่ {f.row} (PID: {f.pid}) — {f.reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <button
+                onClick={handleClose}
+                className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5"
+              >
+                เสร็จสิ้น
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -477,8 +692,8 @@ function PatientDetail({
     firstName: patient.first_name,
     lastName: patient.last_name,
     dateOfBirth: patient.date_of_birth,
-    guardianName: patient.guardian_name,
-    guardianPhone: patient.guardian_phone,
+    guardianName: patient.guardian_name ?? "",
+    guardianPhone: patient.guardian_phone ?? "",
     queueCode: patient.queue_code ?? "",
     address: patient.address ?? "",
   });
@@ -494,8 +709,8 @@ function PatientDetail({
       firstName: patient.first_name,
       lastName: patient.last_name,
       dateOfBirth: patient.date_of_birth,
-      guardianName: patient.guardian_name,
-      guardianPhone: patient.guardian_phone,
+      guardianName: patient.guardian_name ?? "",
+      guardianPhone: patient.guardian_phone ?? "",
       queueCode: patient.queue_code ?? "",
       address: patient.address ?? "",
     });
@@ -597,7 +812,7 @@ function PatientDetail({
       {!editing ? (
         <div className="rounded-xl bg-[#F7FAF9] border border-[#E5ECE9] p-4">
           <div className="text-sm text-[#5B7B73] space-y-0.5 mb-3">
-            <div>ผู้ปกครอง: {patient.guardian_name} · {patient.guardian_phone}</div>
+            <div>ผู้ปกครอง: {patient.guardian_name || "-"} · {patient.guardian_phone || "-"}</div>
             <div>
               วันเกิด: {patient.date_of_birth} · อายุ {calculateAge(patient.date_of_birth)}
             </div>
@@ -630,11 +845,11 @@ function PatientDetail({
           <Input label="ชื่อเด็ก" value={edit.firstName} onChange={(v) => setEdit({ ...edit, firstName: v })} />
           <Input label="นามสกุลเด็ก" value={edit.lastName} onChange={(v) => setEdit({ ...edit, lastName: v })} />
           <Input label="วันเกิด" type="date" value={edit.dateOfBirth} onChange={(v) => setEdit({ ...edit, dateOfBirth: v })} />
-          <Input label="ชื่อผู้ปกครอง" value={edit.guardianName} onChange={(v) => setEdit({ ...edit, guardianName: v })} />
-          <Input label="เบอร์โทรผู้ปกครอง" value={edit.guardianPhone} onChange={(v) => setEdit({ ...edit, guardianPhone: v })} />
+          <Input label="ชื่อผู้ปกครอง (ไม่บังคับ)" value={edit.guardianName} onChange={(v) => setEdit({ ...edit, guardianName: v })} required={false} />
+          <Input label="เบอร์โทรผู้ปกครอง (ไม่บังคับ)" value={edit.guardianPhone} onChange={(v) => setEdit({ ...edit, guardianPhone: v })} required={false} />
           <Input label="PID" value={edit.queueCode} onChange={(v) => setEdit({ ...edit, queueCode: v.toUpperCase() })} />
           <div className="col-span-2">
-            <Input label="ที่อยู่" value={edit.address} onChange={(v) => setEdit({ ...edit, address: v })} required={false} />
+            <Input label="ที่อยู่" value={edit.address} onChange={(v) => setEdit({ ...edit, address: v })} />
           </div>
           {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
           <div className="col-span-2 flex justify-end gap-2">
