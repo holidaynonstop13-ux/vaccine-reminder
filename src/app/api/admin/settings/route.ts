@@ -5,8 +5,9 @@ const DEFAULTS: Record<string, string> = {
   clinic_name: "คลินิก",
   message_template:
     "📌 แจ้งเตือนนัดวัคซีน\n\nวันนี้เป็นวันนัดของน้อง{childName}\nเพื่อรับวัคซีน: {vaccineName}\nสถานที่: {clinicName}\n\nกรุณาพาน้องมาตามนัดหมายค่ะ หากมีข้อสงสัยติดต่อคลินิกได้โดยตรง",
-  reminder_lead_days: "3",
+  overdue_threshold_days: "3",
   auto_send_enabled: "true",
+  vaccine_list: "BCG\nตับอักเสบบี\nคอตีบ-บาดทะยัก-ไอกรน (DTP)\nโปลิโอ (OPV)\nหัด-คางทูม-หัดเยอรมัน (MMR)\nไข้สมองอักเสบเจอี (JE)\nอีสุกอีใส\nไข้หวัดใหญ่",
 };
 
 export async function GET() {

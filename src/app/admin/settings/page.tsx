@@ -15,8 +15,9 @@ export default function SettingsPage() {
   const [values, setValues] = useState({
     clinic_name: "",
     message_template: "",
-    reminder_lead_days: "3",
+    overdue_threshold_days: "3",
     auto_send_enabled: "true",
+    vaccine_list: "",
   });
 
   useEffect(() => {
@@ -96,15 +97,28 @@ export default function SettingsPage() {
               </div>
 
               <div>
+                <span className="text-sm text-[#1E3D36] font-medium">รายชื่อวัคซีน (บรรทัดละ 1 ชื่อ)</span>
+                <textarea
+                  value={values.vaccine_list}
+                  onChange={(e) => setValues({ ...values, vaccine_list: e.target.value })}
+                  rows={6}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] text-sm focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                />
+                <p className="text-xs text-[#8FAAA2] mt-1">
+                  รายชื่อนี้จะขึ้นเป็นเมนูให้เลือกตอนลงวันนัด/ชื่อวัคซีนของเด็กแต่ละคน
+                </p>
+              </div>
+
+              <div>
                 <span className="text-sm text-[#1E3D36] font-medium">
-                  แจ้งเตือนล่วงหน้า (วัน) สำหรับสถานะ &quot;ใกล้นัด&quot;
+                  จำนวนวันหลังเลยนัด ที่ยังถือว่า &quot;ล่าช้า&quot; ก่อนเปลี่ยนเป็น &quot;ขาดนัด&quot;
                 </span>
                 <input
                   type="number"
                   min={0}
                   max={30}
-                  value={values.reminder_lead_days}
-                  onChange={(e) => setValues({ ...values, reminder_lead_days: e.target.value })}
+                  value={values.overdue_threshold_days}
+                  onChange={(e) => setValues({ ...values, overdue_threshold_days: e.target.value })}
                   className="mt-1 w-24 rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
                 />
               </div>

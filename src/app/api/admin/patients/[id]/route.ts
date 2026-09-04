@@ -15,6 +15,7 @@ export async function PATCH(
   if (body.guardianName !== undefined) update.guardian_name = body.guardianName;
   if (body.guardianPhone !== undefined) update.guardian_phone = body.guardianPhone;
   if (body.queueCode !== undefined) update.queue_code = body.queueCode.trim().toUpperCase();
+  if (body.address !== undefined) update.address = body.address;
 
   const { error } = await supabaseAdmin.from("patients").update(update).eq("id", id);
 

@@ -13,6 +13,7 @@ import {
   Plus,
   Send,
   CheckCircle2,
+  RotateCcw,
   ChevronRight,
 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
@@ -33,6 +34,7 @@ type Patient = {
   guardian_phone: string;
   queue_code: string | null;
   date_of_birth: string;
+  address: string | null;
   linked: boolean;
   appointments: Appointment[];
   badge: "urgent" | "warning" | "normal";
@@ -48,8 +50,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 const BADGE_STYLE: Record<Patient["badge"], { label: string; dot: string; className: string }> = {
   normal: { label: "ปกติ", dot: "bg-[#2F6F62]", className: "bg-[#E4F3EC] text-[#2F6F62]" },
-  warning: { label: "ใกล้นัด", dot: "bg-[#C6892B]", className: "bg-[#FCF1D9] text-[#946B1C]" },
-  urgent: { label: "ขาดนัด", dot: "bg-[#C24E36]", className: "bg-[#FBE4E0] text-[#B3452E]" },
+  warning: { label: "ล่าช้า", dot: "bg-[#C6892B]", className: "bg-[#FCF1D9] text-[#946B1C]" },
+  urgent: { label: "ขาดนัด/ต้องติดตาม", dot: "bg-[#C24E36]", className: "bg-[#FBE4E0] text-[#B3452E]" },
 };
 
 function calculateAge(dob: string) {
@@ -93,7 +95,6 @@ export default function AdminPage() {
   const [notifying, setNotifying] = useState(false);
   const [modalPatientId, setModalPatientId] = useState<string | null>(null);
 
-
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -101,8 +102,7 @@ export default function AdminPage() {
     guardianName: "",
     guardianPhone: "",
     queueCode: "",
-    appointmentDate: "",
-    vaccineName: "",
+    address: "",
   });
 
   async function loadPatients() {
@@ -153,8 +153,7 @@ export default function AdminPage() {
       guardianName: "",
       guardianPhone: "",
       queueCode: "",
-      appointmentDate: "",
-      vaccineName: "",
+      address: "",
     });
     setShowAddModal(false);
     setSaving(false);
@@ -226,7 +225,7 @@ export default function AdminPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ค้นหาชื่อเด็กหรือรหัสคิว..."
+              placeholder="ค้นหาชื่อเด็กหรือ PID..."
               className="w-full rounded-xl border border-[#E5ECE9] bg-white pl-10 pr-4 py-2.5 text-sm text-[#1E3D36] placeholder:text-[#A9BDB6] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
             />
           </div>
@@ -236,7 +235,7 @@ export default function AdminPage() {
               <thead className="bg-[#F7FAF9] text-[#5B7B73] text-left text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-5 py-3 font-medium">ชื่อเด็ก</th>
-                  <th className="px-5 py-3 font-medium">รหัสคิว</th>
+                  <th className="px-5 py-3 font-medium">PID</th>
                   <th className="px-5 py-3 font-medium">สถานะ</th>
                   <th className="px-5 py-3 font-medium">LINE</th>
                   <th className="px-5 py-3"></th>
@@ -350,8 +349,7 @@ type FormState = {
   guardianName: string;
   guardianPhone: string;
   queueCode: string;
-  appointmentDate: string;
-  vaccineName: string;
+  address: string;
 };
 
 function AddPatientModal({
@@ -383,12 +381,15 @@ function AddPatientModal({
         }`}
       >
         <div className="p-6">
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex items-start justify-between mb-2">
             <h2 className="text-lg font-semibold text-[#152D28]">เพิ่มเด็ก</h2>
             <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
               <X size={20} />
             </button>
           </div>
+          <p className="text-xs text-[#8FAAA2] mb-4">
+            ยังไม่ต้องลงวันนัดตอนนี้ก็ได้ — เพิ่มนัดหมายทีหลังได้จากหน้ารายละเอียดเด็ก
+          </p>
 
           <form onSubmit={onSubmit} className="grid grid-cols-2 gap-3">
             <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
@@ -396,9 +397,10 @@ function AddPatientModal({
             <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
             <Input label="ชื่อผู้ปกครอง" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} />
             <Input label="เบอร์โทรผู้ปกครอง" value={form.guardianPhone} onChange={(v) => setForm({ ...form, guardianPhone: v })} />
-            <Input label="รหัสคิว (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
-            <Input label="วันนัดฉีดวัคซีน" type="date" value={form.appointmentDate} onChange={(v) => setForm({ ...form, appointmentDate: v })} />
-            <Input label="ชื่อวัคซีน" value={form.vaccineName} onChange={(v) => setForm({ ...form, vaccineName: v })} />
+            <Input label="PID (เช่น A01)" value={form.queueCode} onChange={(v) => setForm({ ...form, queueCode: v.toUpperCase() })} />
+            <div className="col-span-2">
+              <Input label="ที่อยู่" value={form.address} onChange={(v) => setForm({ ...form, address: v })} required={false} />
+            </div>
 
             {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
 
@@ -447,7 +449,7 @@ function PatientModal({
                 <h2 className="text-lg font-semibold text-[#152D28]">
                   {patient.first_name} {patient.last_name}
                 </h2>
-                <p className="text-sm text-[#5B7B73] mt-0.5">รหัสคิว: {patient.queue_code ?? "-"}</p>
+                <p className="text-sm text-[#5B7B73] mt-0.5">PID: {patient.queue_code ?? "-"}</p>
               </div>
               <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
                 <X size={20} />
@@ -478,12 +480,14 @@ function PatientDetail({
     guardianName: patient.guardian_name,
     guardianPhone: patient.guardian_phone,
     queueCode: patient.queue_code ?? "",
+    address: patient.address ?? "",
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [showAddAppt, setShowAddAppt] = useState(false);
   const [newAppt, setNewAppt] = useState({ appointmentDate: "", vaccineName: "" });
+  const [vaccineOptions, setVaccineOptions] = useState<string[]>([]);
 
   useEffect(() => {
     setEdit({
@@ -493,9 +497,22 @@ function PatientDetail({
       guardianName: patient.guardian_name,
       guardianPhone: patient.guardian_phone,
       queueCode: patient.queue_code ?? "",
+      address: patient.address ?? "",
     });
     setEditing(false);
   }, [patient]);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        const list = (data.settings?.vaccine_list ?? "")
+          .split("\n")
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+        setVaccineOptions(list);
+      });
+  }, []);
 
   async function saveEdit(e: React.FormEvent) {
     e.preventDefault();
@@ -552,6 +569,16 @@ function PatientDetail({
     onChanged();
   }
 
+  async function revertReceived(apptId: string) {
+    if (!confirm("เปลี่ยนกลับเป็น \"ยังไม่ได้รับวัคซีน\" สำหรับนัดนี้?")) return;
+    await fetch(`/api/admin/appointments/${apptId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "scheduled", receivedDate: null }),
+    });
+    onChanged();
+  }
+
   async function resendNotify(apptId: string) {
     const res = await fetch(`/api/admin/appointments/${apptId}/notify`, { method: "POST" });
     const data = await res.json();
@@ -574,6 +601,7 @@ function PatientDetail({
             <div>
               วันเกิด: {patient.date_of_birth} · อายุ {calculateAge(patient.date_of_birth)}
             </div>
+            {patient.address && <div>ที่อยู่: {patient.address}</div>}
             <div>
               LINE:{" "}
               {patient.linked ? (
@@ -604,7 +632,10 @@ function PatientDetail({
           <Input label="วันเกิด" type="date" value={edit.dateOfBirth} onChange={(v) => setEdit({ ...edit, dateOfBirth: v })} />
           <Input label="ชื่อผู้ปกครอง" value={edit.guardianName} onChange={(v) => setEdit({ ...edit, guardianName: v })} />
           <Input label="เบอร์โทรผู้ปกครอง" value={edit.guardianPhone} onChange={(v) => setEdit({ ...edit, guardianPhone: v })} />
-          <Input label="รหัสคิว" value={edit.queueCode} onChange={(v) => setEdit({ ...edit, queueCode: v.toUpperCase() })} />
+          <Input label="PID" value={edit.queueCode} onChange={(v) => setEdit({ ...edit, queueCode: v.toUpperCase() })} />
+          <div className="col-span-2">
+            <Input label="ที่อยู่" value={edit.address} onChange={(v) => setEdit({ ...edit, address: v })} required={false} />
+          </div>
           {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
           <div className="col-span-2 flex justify-end gap-2">
             <button type="button" onClick={() => setEditing(false)} className="text-sm text-[#5B7B73] px-3 py-2">
@@ -631,8 +662,39 @@ function PatientDetail({
 
         {showAddAppt && (
           <form onSubmit={addAppointment} className="flex gap-2 items-end flex-wrap mb-3 bg-[#F7FAF9] border border-[#E5ECE9] rounded-xl p-3">
-            <Input label="วันนัด" type="date" value={newAppt.appointmentDate} onChange={(v) => setNewAppt({ ...newAppt, appointmentDate: v })} />
-            <Input label="ชื่อวัคซีน" value={newAppt.vaccineName} onChange={(v) => setNewAppt({ ...newAppt, vaccineName: v })} />
+            <label className="block">
+              <span className="text-sm text-[#1E3D36] font-medium">วันนัด</span>
+              <input
+                required
+                type="date"
+                value={newAppt.appointmentDate}
+                onChange={(e) => setNewAppt({ ...newAppt, appointmentDate: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm text-[#1E3D36] font-medium">ชื่อวัคซีน</span>
+              {vaccineOptions.length > 0 ? (
+                <select
+                  required
+                  value={newAppt.vaccineName}
+                  onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                >
+                  <option value="" disabled>เลือกวัคซีน</option>
+                  {vaccineOptions.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  required
+                  value={newAppt.vaccineName}
+                  onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                />
+              )}
+            </label>
             <button type="submit" className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5">
               บันทึก
             </button>
@@ -653,9 +715,13 @@ function PatientDetail({
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                {a.status !== "completed" && (
+                {a.status !== "completed" ? (
                   <SmallButton onClick={() => markReceived(a.id)} icon={<CheckCircle2 size={14} />}>
                     ได้รับแล้ว
+                  </SmallButton>
+                ) : (
+                  <SmallButton onClick={() => revertReceived(a.id)} icon={<RotateCcw size={14} />} tone="warning">
+                    ยกเลิก (ยังไม่ได้รับ)
                   </SmallButton>
                 )}
                 <SmallButton onClick={() => resendNotify(a.id)} icon={<Send size={14} />}>
@@ -706,17 +772,19 @@ function Input({
   value,
   onChange,
   type = "text",
+  required = true,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <label className="block">
       <span className="text-sm text-[#1E3D36] font-medium">{label}</span>
       <input
-        required
+        required={required}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

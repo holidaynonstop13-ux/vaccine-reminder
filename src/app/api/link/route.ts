@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const { idToken, queueCode } = await req.json();
 
   if (!idToken || !queueCode) {
-    return NextResponse.json({ error: "กรุณากรอกรหัสคิว" }, { status: 400 });
+    return NextResponse.json({ error: "กรุณากรอก PID" }, { status: 400 });
   }
 
   const lineUserId = await verifyLineIdToken(idToken);
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   if (!match) {
     return NextResponse.json(
-      { error: "ไม่พบรหัสคิวนี้ กรุณาตรวจสอบอีกครั้ง" },
+      { error: "ไม่พบ PID นี้ กรุณาตรวจสอบอีกครั้ง" },
       { status: 404 }
     );
   }

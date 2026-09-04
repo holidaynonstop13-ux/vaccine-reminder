@@ -74,7 +74,7 @@ export default function LinkPage() {
             ลงทะเบียนรับแจ้งเตือนวัคซีน
           </h1>
           <p className="mt-1 text-sm text-[#5B7B73] text-center">
-            กรอกรหัสคิวที่ได้รับจากเจ้าหน้าที่ เพื่อรับการแจ้งเตือนวันนัดผ่าน LINE
+            กรอก PID ที่ได้รับจากเจ้าหน้าที่ เพื่อรับการแจ้งเตือนวันนัดผ่าน LINE
           </p>
         </div>
 
@@ -96,7 +96,7 @@ export default function LinkPage() {
             className="bg-white rounded-2xl p-5 shadow-sm space-y-4"
           >
             <Field
-              label="รหัสคิว"
+              label="PID"
               value={queueCode}
               onChange={setQueueCode}
               placeholder="เช่น A01"
