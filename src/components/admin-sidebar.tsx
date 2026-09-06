@@ -38,7 +38,7 @@ export function AdminSidebar({
 
   return (
     <aside
-      className={`shrink-0 bg-[#152D28] text-white flex flex-col transition-all duration-200 ${
+      className={`shrink-0 sticky top-0 h-screen bg-[#152D28] text-white flex flex-col transition-all duration-200 ${
         open ? "w-56" : "w-16"
       }`}
     >
