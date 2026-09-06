@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-
-const DEFAULT_TEMPLATE =
-  "📌 ติดตามนัดวัคซีน\n\nน้อง{childName}\nนัดวันที่: {appointmentDate}\nวัคซีน: {vaccineName}\nสถานที่: {clinicName}\n\nกรุณาพาน้องมารับวัคซีนโดยเร็วค่ะ หากมีข้อสงสัยติดต่อคลินิกได้โดยตรง";
+import { getSettings, fillTemplate, sendLinePush } from "@/lib/notify";
 
 export async function POST(
   _req: NextRequest,
@@ -36,33 +34,17 @@ export async function POST(
     return NextResponse.json({ error: "เด็กคนนี้ยังไม่ได้ผูกบัญชี LINE" }, { status: 400 });
   }
 
-  const { data: settingsRows } = await supabaseAdmin
-    .from("settings")
-    .select("key, value")
-    .in("key", ["clinic_name"]);
-  const clinicName =
-    (settingsRows ?? []).find((s) => s.key === "clinic_name")?.value ||
-    process.env.CLINIC_NAME ||
-    "คลินิก";
-
-  const text = DEFAULT_TEMPLATE.replaceAll("{childName}", `${patient.first_name} ${patient.last_name}`)
-    .replaceAll("{appointmentDate}", appt.appointment_date)
-    .replaceAll("{vaccineName}", appt.vaccine_name)
-    .replaceAll("{clinicName}", clinicName);
-
-  const res = await fetch("https://api.line.me/v2/bot/message/push", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-    },
-    body: JSON.stringify({
-      to: link.line_user_id,
-      messages: [{ type: "text", text }],
-    }),
+  const settings = await getSettings();
+  const text = fillTemplate(settings.messageTemplate, {
+    childName: `${patient.first_name} ${patient.last_name}`,
+    vaccineName: appt.vaccine_name,
+    appointmentDate: appt.appointment_date,
+    clinicName: settings.clinicName,
   });
 
-  if (!res.ok) {
+  const ok = await sendLinePush(link.line_user_id, text);
+
+  if (!ok) {
     return NextResponse.json({ error: "ส่งข้อความไม่สำเร็จ" }, { status: 500 });
   }
 

@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 const DEFAULT_TEMPLATE =
   "📌 แจ้งเตือนนัดวัคซีน\n\nวันนี้เป็นวันนัดของน้อง{childName}\nเพื่อรับวัคซีน: {vaccineName}\nสถานที่: {clinicName}\n\nกรุณาพาน้องมาตามนัดหมายค่ะ หากมีข้อสงสัยติดต่อคลินิกได้โดยตรง";
 
-async function getSettings() {
+export async function getSettings() {
   const { data } = await supabaseAdmin.from("settings").select("key, value");
   const map: Record<string, string> = {};
   for (const row of data ?? []) map[row.key] = row.value;
@@ -14,7 +14,7 @@ async function getSettings() {
   };
 }
 
-function fillTemplate(
+export function fillTemplate(
   template: string,
   vars: { childName: string; vaccineName: string; appointmentDate: string; clinicName: string }
 ) {
@@ -25,7 +25,7 @@ function fillTemplate(
     .replaceAll("{clinicName}", vars.clinicName);
 }
 
-async function sendLinePush(lineUserId: string, text: string) {
+export async function sendLinePush(lineUserId: string, text: string) {
   const res = await fetch("https://api.line.me/v2/bot/message/push", {
     method: "POST",
     headers: {
