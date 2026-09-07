@@ -9,6 +9,7 @@ export async function PATCH(
   const body = await req.json();
 
   const update: Record<string, string> = {};
+  if (body.title !== undefined) update.title = body.title;
   if (body.firstName !== undefined) update.first_name = body.firstName;
   if (body.lastName !== undefined) update.last_name = body.lastName;
   if (body.dateOfBirth !== undefined) update.date_of_birth = body.dateOfBirth;

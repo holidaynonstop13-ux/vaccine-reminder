@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type ImportRow = {
   pid: string;
+  title?: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -13,6 +14,13 @@ type ImportRow = {
 
 function isValidDate(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
+}
+
+function normalizeTitle(raw: string | undefined) {
+  const t = (raw ?? "").trim();
+  if (["ด.ช.", "ด.ช", "ชาย", "ช.", "ช", "boy", "m"].includes(t.toLowerCase())) return "ด.ช.";
+  if (["ด.ญ.", "ด.ญ", "หญิง", "ญ.", "ญ", "girl", "f"].includes(t.toLowerCase())) return "ด.ญ.";
+  return t || null; // keep whatever was typed if it doesn't match known variants
 }
 
 export async function POST(req: NextRequest) {
@@ -39,6 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { error } = await supabaseAdmin.from("patients").insert({
+      title: normalizeTitle(r.title),
       first_name: r.firstName,
       last_name: r.lastName,
       date_of_birth: r.dateOfBirth,

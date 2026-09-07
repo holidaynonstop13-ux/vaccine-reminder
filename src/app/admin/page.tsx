@@ -30,6 +30,7 @@ type Appointment = {
 
 type Patient = {
   id: string;
+  title: string | null;
   first_name: string;
   last_name: string;
   guardian_name: string | null;
@@ -83,6 +84,10 @@ function calculateAge(dob: string) {
   return parts.join(" ");
 }
 
+function displayName(p: { title?: string | null; first_name: string; last_name: string }) {
+  return `${p.title ? p.title : ""}${p.first_name} ${p.last_name}`;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -99,6 +104,7 @@ export default function AdminPage() {
   const [modalPatientId, setModalPatientId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
+    title: "ด.ช.",
     firstName: "",
     lastName: "",
     dateOfBirth: "",
@@ -150,6 +156,7 @@ export default function AdminPage() {
     }
 
     setForm({
+      title: "ด.ช.",
       firstName: "",
       lastName: "",
       dateOfBirth: "",
@@ -271,7 +278,7 @@ export default function AdminPage() {
                       className="border-t border-[#EFF4F2] cursor-pointer hover:bg-[#FAFCFB] transition-colors"
                     >
                       <td className="px-5 py-3.5 text-[#1E3D36] font-medium">
-                        {p.first_name} {p.last_name}
+                        {displayName(p)}
                       </td>
                       <td className="px-5 py-3.5 text-[#1E3D36]">{p.queue_code ?? "-"}</td>
                       <td className="px-5 py-3.5">
@@ -355,6 +362,7 @@ function IconButton({
 }
 
 type FormState = {
+  title: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -404,6 +412,18 @@ function AddPatientModal({
           </p>
 
           <form onSubmit={onSubmit} className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-sm text-[#1E3D36] font-medium">คำนำหน้า</span>
+              <select
+                required
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+              >
+                <option value="ด.ช.">ด.ช.</option>
+                <option value="ด.ญ.">ด.ญ.</option>
+              </select>
+            </label>
             <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
             <Input label="นามสกุลเด็ก" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
             <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
@@ -442,7 +462,7 @@ function ImportModal({
   onImported: () => void;
 }) {
   const [rows, setRows] = useState<
-    { pid: string; firstName: string; lastName: string; dateOfBirth: string; address: string; guardianName: string; guardianPhone: string }[]
+    { pid: string; title: string; firstName: string; lastName: string; dateOfBirth: string; address: string; guardianName: string; guardianPhone: string }[]
   >([]);
   const [fileName, setFileName] = useState("");
   const [parseError, setParseError] = useState("");
@@ -481,12 +501,13 @@ function ImportModal({
           .filter((r) => r.some((cell) => cell !== undefined && cell !== ""))
           .map((r) => ({
             pid: String(r[0] ?? "").trim(),
-            firstName: String(r[1] ?? "").trim(),
-            lastName: String(r[2] ?? "").trim(),
-            dateOfBirth: excelDateToISO(r[3]),
-            address: String(r[4] ?? "").trim(),
-            guardianName: String(r[5] ?? "").trim(),
-            guardianPhone: String(r[6] ?? "").trim(),
+            title: String(r[1] ?? "").trim(),
+            firstName: String(r[2] ?? "").trim(),
+            lastName: String(r[3] ?? "").trim(),
+            dateOfBirth: excelDateToISO(r[4]),
+            address: String(r[5] ?? "").trim(),
+            guardianName: String(r[6] ?? "").trim(),
+            guardianPhone: String(r[7] ?? "").trim(),
           }));
 
         setRows(parsed);
@@ -511,8 +532,8 @@ function ImportModal({
   }
 
   function downloadTemplate() {
-    const header = ["PID", "ชื่อ", "นามสกุล", "วันเกิด (YYYY-MM-DD)", "ที่อยู่", "ชื่อผู้ปกครอง", "เบอร์โทร"];
-    const example = ["A01", "สมชาย", "ใจดี", "2023-05-10", "123 หมู่ 4 ต.บ้านใหม่ อ.เมือง", "สมหญิง ใจดี", "0812345678"];
+    const header = ["PID", "คำนำหน้า (ด.ช./ด.ญ.)", "ชื่อ", "นามสกุล", "วันเกิด (YYYY-MM-DD)", "ที่อยู่", "ชื่อผู้ปกครอง", "เบอร์โทร"];
+    const example = ["A01", "ด.ช.", "สมชาย", "ใจดี", "2023-05-10", "123 หมู่ 4 ต.บ้านใหม่ อ.เมือง", "สมหญิง ใจดี", "0812345678"];
     const ws = XLSX.utils.aoa_to_sheet([header, example]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "ข้อมูลเด็ก");
@@ -548,10 +569,10 @@ function ImportModal({
 
           <div className="rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3 mb-4 text-sm text-[#5B7B73]">
             <p className="mb-2">
-              ไฟล์ต้องมี 7 คอลัมน์ตามลำดับนี้ (แถวแรกเป็นหัวตาราง ไม่ต้องตรงชื่อเป๊ะๆ ก็ได้):
+              ไฟล์ต้องมี 8 คอลัมน์ตามลำดับนี้ (แถวแรกเป็นหัวตาราง ไม่ต้องตรงชื่อเป๊ะๆ ก็ได้):
             </p>
             <p className="font-medium text-[#1E3D36] mb-2">
-              PID · ชื่อ · นามสกุล · วันเกิด · ที่อยู่ · ชื่อผู้ปกครอง (ไม่บังคับ) · เบอร์โทร (ไม่บังคับ)
+              PID · คำนำหน้า (ด.ช./ด.ญ.) · ชื่อ · นามสกุล · วันเกิด · ที่อยู่ · ชื่อผู้ปกครอง (ไม่บังคับ) · เบอร์โทร (ไม่บังคับ)
             </p>
             <button onClick={downloadTemplate} className="text-[#2F6F62] font-medium hover:underline">
               ดาวน์โหลดแม่แบบ Excel
@@ -588,7 +609,7 @@ function ImportModal({
                     {rows.slice(0, 5).map((r, i) => (
                       <tr key={i} className="border-t border-[#EFF4F2]">
                         <td className="px-3 py-2">{r.pid}</td>
-                        <td className="px-3 py-2">{r.firstName} {r.lastName}</td>
+                        <td className="px-3 py-2">{r.title}{r.firstName} {r.lastName}</td>
                         <td className="px-3 py-2">{r.dateOfBirth}</td>
                         <td className="px-3 py-2">{r.address}</td>
                       </tr>
@@ -662,7 +683,7 @@ function PatientModal({
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="text-lg font-semibold text-[#152D28]">
-                  {patient.first_name} {patient.last_name}
+                  {displayName(patient)}
                 </h2>
                 <p className="text-sm text-[#5B7B73] mt-0.5">PID: {patient.queue_code ?? "-"}</p>
               </div>
@@ -689,6 +710,7 @@ function PatientDetail({
 }) {
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState({
+    title: patient.title ?? "ด.ช.",
     firstName: patient.first_name,
     lastName: patient.last_name,
     dateOfBirth: patient.date_of_birth,
@@ -706,6 +728,7 @@ function PatientDetail({
 
   useEffect(() => {
     setEdit({
+      title: patient.title ?? "ด.ช.",
       firstName: patient.first_name,
       lastName: patient.last_name,
       dateOfBirth: patient.date_of_birth,
@@ -842,6 +865,17 @@ function PatientDetail({
         </div>
       ) : (
         <form onSubmit={saveEdit} className="grid grid-cols-2 gap-3 bg-[#F7FAF9] border border-[#E5ECE9] rounded-xl p-4">
+          <label className="block">
+            <span className="text-sm text-[#1E3D36] font-medium">คำนำหน้า</span>
+            <select
+              value={edit.title}
+              onChange={(e) => setEdit({ ...edit, title: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+            >
+              <option value="ด.ช.">ด.ช.</option>
+              <option value="ด.ญ.">ด.ญ.</option>
+            </select>
+          </label>
           <Input label="ชื่อเด็ก" value={edit.firstName} onChange={(v) => setEdit({ ...edit, firstName: v })} />
           <Input label="นามสกุลเด็ก" value={edit.lastName} onChange={(v) => setEdit({ ...edit, lastName: v })} />
           <Input label="วันเกิด" type="date" value={edit.dateOfBirth} onChange={(v) => setEdit({ ...edit, dateOfBirth: v })} />
