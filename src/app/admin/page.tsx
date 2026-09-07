@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   RotateCcw,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import * as XLSX from "xlsx";
@@ -84,6 +87,22 @@ function calculateAge(dob: string) {
   return parts.join(" ");
 }
 
+function ageInDays(dob: string) {
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return 0;
+  return Math.floor((Date.now() - birth.getTime()) / 86400000);
+}
+
+function nextAppointmentDate(appointments: Appointment[]) {
+  const pending = appointments
+    .filter((a) => a.status !== "completed")
+    .map((a) => a.appointment_date)
+    .sort();
+  return pending[0] ?? null;
+}
+
+type SortKey = "pid" | "age" | "appointment";
+
 function displayName(p: { title?: string | null; first_name: string; last_name: string }) {
   return `${p.title ? p.title : ""}${p.first_name} ${p.last_name}`;
 }
@@ -93,6 +112,8 @@ export default function AdminPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -134,6 +155,36 @@ export default function AdminPage() {
       return fullName.includes(q) || (p.queue_code ?? "").toLowerCase().includes(q);
     });
   }, [patients, search]);
+
+  const sortedPatients = useMemo(() => {
+    if (!sortKey) return filteredPatients;
+    const dir = sortDir === "asc" ? 1 : -1;
+
+    return [...filteredPatients].sort((a, b) => {
+      if (sortKey === "pid") {
+        return (a.queue_code ?? "").localeCompare(b.queue_code ?? "", "th") * dir;
+      }
+      if (sortKey === "age") {
+        return (ageInDays(a.date_of_birth) - ageInDays(b.date_of_birth)) * dir;
+      }
+      // appointment date — patients with no pending appointment sort last regardless of direction
+      const aDate = nextAppointmentDate(a.appointments);
+      const bDate = nextAppointmentDate(b.appointments);
+      if (!aDate && !bDate) return 0;
+      if (!aDate) return 1;
+      if (!bDate) return -1;
+      return aDate.localeCompare(bDate) * dir;
+    });
+  }, [filteredPatients, sortKey, sortDir]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
 
   const modalPatient = patients.find((p) => p.id === modalPatientId) ?? null;
 
@@ -248,7 +299,9 @@ export default function AdminPage() {
               <thead className="bg-[#F7FAF9] text-[#5B7B73] text-left text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-5 py-3 font-medium">ชื่อเด็ก</th>
-                  <th className="px-5 py-3 font-medium">PID</th>
+                  <SortableHeader label="PID" sortKey="pid" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+                  <SortableHeader label="อายุ" sortKey="age" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+                  <SortableHeader label="นัดถัดไป" sortKey="appointment" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
                   <th className="px-5 py-3 font-medium">สถานะ</th>
                   <th className="px-5 py-3 font-medium">LINE</th>
                   <th className="px-5 py-3"></th>
@@ -257,20 +310,21 @@ export default function AdminPage() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-[#5B7B73]">
+                    <td colSpan={7} className="px-5 py-8 text-center text-[#5B7B73]">
                       กำลังโหลด...
                     </td>
                   </tr>
                 )}
                 {!loading && filteredPatients.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-[#5B7B73]">
+                    <td colSpan={7} className="px-5 py-8 text-center text-[#5B7B73]">
                       {search ? "ไม่พบข้อมูลที่ค้นหา" : "ยังไม่มีข้อมูลเด็ก"}
                     </td>
                   </tr>
                 )}
-                {filteredPatients.map((p) => {
+                {sortedPatients.map((p) => {
                   const badge = BADGE_STYLE[p.badge];
+                  const nextAppt = nextAppointmentDate(p.appointments);
                   return (
                     <tr
                       key={p.id}
@@ -281,6 +335,8 @@ export default function AdminPage() {
                         {displayName(p)}
                       </td>
                       <td className="px-5 py-3.5 text-[#1E3D36]">{p.queue_code ?? "-"}</td>
+                      <td className="px-5 py-3.5 text-[#5B7B73]">{calculateAge(p.date_of_birth)}</td>
+                      <td className="px-5 py-3.5 text-[#5B7B73]">{nextAppt ?? "-"}</td>
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${badge.className}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
@@ -329,6 +385,34 @@ export default function AdminPage() {
         onChanged={loadPatients}
       />
     </div>
+  );
+}
+
+function SortableHeader({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onClick,
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey | null;
+  dir: "asc" | "desc";
+  onClick: (key: SortKey) => void;
+}) {
+  const active = activeKey === sortKey;
+  const Icon = active ? (dir === "asc" ? ChevronUp : ChevronDown) : ChevronsUpDown;
+  return (
+    <th className="px-5 py-3 font-medium">
+      <button
+        onClick={() => onClick(sortKey)}
+        className={`flex items-center gap-1 hover:text-[#1E3D36] transition-colors ${active ? "text-[#1E3D36]" : ""}`}
+      >
+        {label}
+        <Icon size={13} />
+      </button>
+    </th>
   );
 }
 
