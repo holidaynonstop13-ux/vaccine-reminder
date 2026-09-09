@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 type ImportRow = {
   pid: string;
   title?: string;
+  nickname?: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
 
     const { error } = await supabaseAdmin.from("patients").insert({
       title: normalizeTitle(r.title),
+      nickname: r.nickname || null,
       first_name: r.firstName,
       last_name: r.lastName,
       date_of_birth: r.dateOfBirth,

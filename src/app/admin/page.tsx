@@ -24,7 +24,6 @@ import {
   Phone,
   MapPin,
   User,
-  AlertTriangle,
   CalendarPlus,
 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
@@ -539,7 +538,7 @@ function ImportModal({
   onImported: () => void;
 }) {
   const [rows, setRows] = useState<
-    { pid: string; title: string; firstName: string; lastName: string; dateOfBirth: string; address: string; guardianName: string; guardianPhone: string }[]
+    { pid: string; title: string; nickname: string; firstName: string; lastName: string; dateOfBirth: string; address: string; guardianName: string; guardianPhone: string }[]
   >([]);
   const [fileName, setFileName] = useState("");
   const [parseError, setParseError] = useState("");
@@ -579,12 +578,13 @@ function ImportModal({
           .map((r) => ({
             pid: String(r[0] ?? "").trim(),
             title: String(r[1] ?? "").trim(),
-            firstName: String(r[2] ?? "").trim(),
-            lastName: String(r[3] ?? "").trim(),
-            dateOfBirth: excelDateToISO(r[4]),
-            address: String(r[5] ?? "").trim(),
-            guardianName: String(r[6] ?? "").trim(),
-            guardianPhone: String(r[7] ?? "").trim(),
+            nickname: String(r[2] ?? "").trim(),
+            firstName: String(r[3] ?? "").trim(),
+            lastName: String(r[4] ?? "").trim(),
+            dateOfBirth: excelDateToISO(r[5]),
+            address: String(r[6] ?? "").trim(),
+            guardianName: String(r[7] ?? "").trim(),
+            guardianPhone: String(r[8] ?? "").trim(),
           }));
 
         setRows(parsed);
@@ -609,8 +609,8 @@ function ImportModal({
   }
 
   function downloadTemplate() {
-    const header = ["PID", "คำนำหน้า (ด.ช./ด.ญ.)", "ชื่อ", "นามสกุล", "วันเกิด (YYYY-MM-DD)", "ที่อยู่", "ชื่อผู้ปกครอง", "เบอร์โทร"];
-    const example = ["A01", "ด.ช.", "สมชาย", "ใจดี", "2023-05-10", "123 หมู่ 4 ต.บ้านใหม่ อ.เมือง", "สมหญิง ใจดี", "0812345678"];
+    const header = ["PID", "คำนำหน้า (ด.ช./ด.ญ.)", "ชื่อเล่น (ไม่บังคับ)", "ชื่อ", "นามสกุล", "วันเกิด (YYYY-MM-DD)", "ที่อยู่", "ชื่อผู้ปกครอง", "เบอร์โทร"];
+    const example = ["A01", "ด.ช.", "น้องเอ", "สมชาย", "ใจดี", "2023-05-10", "123 หมู่ 4 ต.บ้านใหม่ อ.เมือง", "สมหญิง ใจดี", "0812345678"];
     const ws = XLSX.utils.aoa_to_sheet([header, example]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "ข้อมูลเด็ก");
@@ -646,10 +646,10 @@ function ImportModal({
 
           <div className="rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3 mb-4 text-sm text-[#5B7B73]">
             <p className="mb-2">
-              ไฟล์ต้องมี 8 คอลัมน์ตามลำดับนี้ (แถวแรกเป็นหัวตาราง ไม่ต้องตรงชื่อเป๊ะๆ ก็ได้):
+              ไฟล์ต้องมี 9 คอลัมน์ตามลำดับนี้ (แถวแรกเป็นหัวตาราง ไม่ต้องตรงชื่อเป๊ะๆ ก็ได้):
             </p>
             <p className="font-medium text-[#1E3D36] mb-2">
-              PID · คำนำหน้า (ด.ช./ด.ญ.) · ชื่อ · นามสกุล · วันเกิด · ที่อยู่ · ชื่อผู้ปกครอง (ไม่บังคับ) · เบอร์โทร (ไม่บังคับ)
+              PID · คำนำหน้า (ด.ช./ด.ญ.) · ชื่อเล่น (ไม่บังคับ) · ชื่อ · นามสกุล · วันเกิด · ที่อยู่ · ชื่อผู้ปกครอง (ไม่บังคับ) · เบอร์โทร (ไม่บังคับ)
             </p>
             <button onClick={downloadTemplate} className="text-[#2F6F62] font-medium hover:underline">
               ดาวน์โหลดแม่แบบ Excel
@@ -812,7 +812,6 @@ function PatientDetail({
   const [newAppt, setNewAppt] = useState({ appointmentDate: "", vaccineName: "", doseNumber: "" });
   const [vaccineOptions, setVaccineOptions] = useState<string[]>([]);
   const [clinicName, setClinicName] = useState("");
-  const [visitNote, setVisitNote] = useState("");
 
   useEffect(() => {
     setEdit({
@@ -839,7 +838,6 @@ function PatientDetail({
           .filter(Boolean);
         setVaccineOptions(list);
         setClinicName(data.settings?.clinic_name ?? "");
-        setVisitNote(data.settings?.visit_note ?? "");
       });
   }, []);
 
@@ -1141,13 +1139,6 @@ function PatientDetail({
             !showAddAppt && <p className="text-sm text-[#5B7B73]">ไม่มีนัดที่ต้องติดตามตอนนี้</p>
           )}
         </div>
-
-        {visitNote && (
-          <div className="rounded-xl bg-[#FCF1D9] border border-[#F0DDA8] p-3.5 flex gap-2">
-            <AlertTriangle size={16} className="text-[#946B1C] shrink-0 mt-0.5" />
-            <p className="text-sm text-[#7A5A17]">{visitNote}</p>
-          </div>
-        )}
 
         <div className="rounded-xl bg-white border border-[#E5ECE9] p-4">
           <span className="text-sm font-semibold text-[#152D28]">ประวัติการรับวัคซีน</span>

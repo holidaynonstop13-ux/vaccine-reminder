@@ -8,7 +8,6 @@ const DEFAULTS: Record<string, string> = {
   overdue_threshold_days: "3",
   auto_send_enabled: "true",
   vaccine_list: "BCG\nตับอักเสบบี\nคอตีบ-บาดทะยัก-ไอกรน (DTP)\nโปลิโอ (OPV)\nหัด-คางทูม-หัดเยอรมัน (MMR)\nไข้สมองอักเสบเจอี (JE)\nอีสุกอีใส\nไข้หวัดใหญ่",
-  visit_note: "กรุณานำบัตรประชาชนและสมุดบันทึกสุขภาพแม่และเด็ก/สมุดวัคซีนมาด้วยทุกครั้ง หากไม่สะดวกมาตามนัดกรุณาแจ้งเจ้าหน้าที่ล่วงหน้า",
 };
 
 export async function GET() {
