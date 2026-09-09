@@ -38,14 +38,14 @@ export function AdminSidebar({
 
   return (
     <aside
-      className={`shrink-0 sticky top-0 h-screen bg-[#152D28] text-white flex flex-col transition-all duration-200 ${
+      className={`shrink-0 sticky top-0 h-screen bg-[linear-gradient(180deg,#0D4A49_0%,#0B3D42_100%)] text-white flex flex-col transition-all duration-200 ${
         open ? "w-56" : "w-16"
       }`}
     >
       <div className={`flex items-center h-16 px-4 ${open ? "justify-between" : "justify-center"}`}>
         {open && (
           <div className="flex items-center gap-2">
-            <Syringe size={18} className="text-[#7FD8B8]" />
+            <Syringe size={18} className="text-[#5BCBB2]" />
             <span className="font-semibold text-sm">วัคซีนคลินิก</span>
           </div>
         )}
@@ -88,8 +88,10 @@ function SidebarItem({
     <button
       onClick={onClick}
       title={open ? undefined : label}
-      className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-        active ? "bg-[#2F6F62] text-white" : "text-[#C7DAD4] hover:bg-white/10 hover:text-white"
+      className={`w-full flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors ${
+        active
+          ? "bg-[linear-gradient(90deg,#24B89A,#35C4A8)] text-white shadow-[0_4px_14px_rgba(36,184,154,0.20)]"
+          : "text-white/90 hover:bg-[#24B89A]/15 hover:text-white"
       } ${open ? "justify-start" : "justify-center"}`}
     >
       {icon}

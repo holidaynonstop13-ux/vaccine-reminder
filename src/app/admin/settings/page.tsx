@@ -47,7 +47,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F3F7F5]">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#F4FCFA_0%,#ECFAF6_45%,#EEF8FF_100%)]">
       <AdminSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
@@ -62,55 +62,55 @@ export default function SettingsPage() {
         <div className="max-w-2xl mx-auto px-6 py-8">
           <button
             onClick={() => router.push("/admin")}
-            className="flex items-center gap-1.5 text-sm text-[#5B7B73] hover:text-[#1E3D36] mb-4"
+            className="flex items-center gap-1.5 text-sm text-[#668585] hover:text-[#173B3B] mb-4"
           >
             <ArrowLeft size={16} /> กลับไปหน้าข้อมูลเด็ก
           </button>
 
-          <h1 className="text-2xl font-semibold text-[#152D28] tracking-tight mb-6">ตั้งค่าระบบ</h1>
+          <h1 className="text-2xl font-semibold text-[#0D4A49] tracking-tight mb-6">ตั้งค่าระบบ</h1>
 
           {loading ? (
-            <p className="text-sm text-[#5B7B73]">กำลังโหลด...</p>
+            <p className="text-sm text-[#668585]">กำลังโหลด...</p>
           ) : (
-            <div className="bg-white rounded-2xl shadow-sm border border-[#E5ECE9] p-6 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-[#DDEEEA] p-6 space-y-6">
               <div>
-                <span className="text-sm text-[#1E3D36] font-medium">ชื่อคลินิก/สถานที่</span>
+                <span className="text-sm text-[#173B3B] font-medium">ชื่อคลินิก/สถานที่</span>
                 <input
                   value={values.clinic_name}
                   onChange={(e) => setValues({ ...values, clinic_name: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                  className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
                 />
-                <p className="text-xs text-[#8FAAA2] mt-1">ใช้แทน {"{clinicName}"} ในข้อความแจ้งเตือน</p>
+                <p className="text-xs text-[#A9BBC3] mt-1">ใช้แทน {"{clinicName}"} ในข้อความแจ้งเตือน</p>
               </div>
 
               <div>
-                <span className="text-sm text-[#1E3D36] font-medium">ข้อความแจ้งเตือน</span>
+                <span className="text-sm text-[#173B3B] font-medium">ข้อความแจ้งเตือน</span>
                 <textarea
                   value={values.message_template}
                   onChange={(e) => setValues({ ...values, message_template: e.target.value })}
                   rows={7}
-                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] text-sm focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                  className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] text-sm focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
                 />
-                <p className="text-xs text-[#8FAAA2] mt-1">
+                <p className="text-xs text-[#A9BBC3] mt-1">
                   ตัวแปรที่ใช้ได้: {"{childName}"} {"{vaccineName}"} {"{appointmentDate}"} {"{clinicName}"}
                 </p>
               </div>
 
               <div>
-                <span className="text-sm text-[#1E3D36] font-medium">รายชื่อวัคซีน (บรรทัดละ 1 ชื่อ)</span>
+                <span className="text-sm text-[#173B3B] font-medium">รายชื่อวัคซีน (บรรทัดละ 1 ชื่อ)</span>
                 <textarea
                   value={values.vaccine_list}
                   onChange={(e) => setValues({ ...values, vaccine_list: e.target.value })}
                   rows={6}
-                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] text-sm focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                  className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] text-sm focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
                 />
-                <p className="text-xs text-[#8FAAA2] mt-1">
+                <p className="text-xs text-[#A9BBC3] mt-1">
                   รายชื่อนี้จะขึ้นเป็นเมนูให้เลือกตอนลงวันนัด/ชื่อวัคซีนของเด็กแต่ละคน
                 </p>
               </div>
 
               <div>
-                <span className="text-sm text-[#1E3D36] font-medium">
+                <span className="text-sm text-[#173B3B] font-medium">
                   จำนวนวันหลังเลยนัด ที่ยังถือว่า &quot;ล่าช้า&quot; ก่อนเปลี่ยนเป็น &quot;ขาดนัด&quot;
                 </span>
                 <input
@@ -119,14 +119,14 @@ export default function SettingsPage() {
                   max={30}
                   value={values.overdue_threshold_days}
                   onChange={(e) => setValues({ ...values, overdue_threshold_days: e.target.value })}
-                  className="mt-1 w-24 rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                  className="mt-1 w-24 rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3">
+              <div className="flex items-center justify-between rounded-lg bg-[#F2FBF8] border border-[#DDEEEA] px-4 py-3">
                 <div>
-                  <p className="text-sm text-[#1E3D36] font-medium">เปิดใช้งานการส่งแจ้งเตือนอัตโนมัติทุกวัน</p>
-                  <p className="text-xs text-[#8FAAA2] mt-0.5">
+                  <p className="text-sm text-[#173B3B] font-medium">เปิดใช้งานการส่งแจ้งเตือนอัตโนมัติทุกวัน</p>
+                  <p className="text-xs text-[#A9BBC3] mt-0.5">
                     ปิดชั่วคราวได้ เช่น ช่วงคลินิกหยุด (ปุ่ม &quot;ส่งแจ้งเตือนตอนนี้&quot; ยังใช้ได้ตามปกติ)
                   </p>
                 </div>
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                     })
                   }
                   className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-                    values.auto_send_enabled === "true" ? "bg-[#2F6F62]" : "bg-[#D8E5E0]"
+                    values.auto_send_enabled === "true" ? "bg-[#177C6D]" : "bg-[#CFE7E1]"
                   }`}
                 >
                   <span
@@ -149,19 +149,19 @@ export default function SettingsPage() {
                 </button>
               </div>
 
-              <div className="rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3">
-                <p className="text-sm text-[#1E3D36] font-medium">เวลาส่งอัตโนมัติ: 07:00 น. ทุกวัน</p>
-                <p className="text-xs text-[#8FAAA2] mt-0.5">
+              <div className="rounded-lg bg-[#F2FBF8] border border-[#DDEEEA] px-4 py-3">
+                <p className="text-sm text-[#173B3B] font-medium">เวลาส่งอัตโนมัติ: 07:00 น. ทุกวัน</p>
+                <p className="text-xs text-[#A9BBC3] mt-0.5">
                   เปลี่ยนเวลานี้ต้องแจ้งผู้พัฒนาระบบ เนื่องจากข้อจำกัดของแพ็กเกจ Vercel ที่ใช้อยู่
                 </p>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-1">
-                {saved && <span className="text-sm text-[#2F6F62]">บันทึกแล้ว</span>}
+                {saved && <span className="text-sm text-[#177C6D]">บันทึกแล้ว</span>}
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+                  className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
                 >
                   {saving ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}
                 </button>

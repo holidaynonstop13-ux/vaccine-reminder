@@ -63,9 +63,9 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const BADGE_STYLE: Record<Patient["badge"], { label: string; dot: string; className: string }> = {
-  normal: { label: "ปกติ", dot: "bg-[#2F6F62]", className: "bg-[#E4F3EC] text-[#2F6F62]" },
+  normal: { label: "ปกติ", dot: "bg-[#27AE85]", className: "bg-[#DDF5EC] text-[#208268]" },
   warning: { label: "ล่าช้า", dot: "bg-[#C6892B]", className: "bg-[#FCF1D9] text-[#946B1C]" },
-  urgent: { label: "ขาดนัด/ต้องติดตาม", dot: "bg-[#C24E36]", className: "bg-[#FBE4E0] text-[#B3452E]" },
+  urgent: { label: "ขาดนัด/ต้องติดตาม", dot: "bg-[#F45B69]", className: "bg-[#FFE6E6] text-[#D94C58]" },
 };
 
 function calculateAge(dob: string) {
@@ -238,7 +238,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F3F7F5]">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#F4FCFA_0%,#ECFAF6_45%,#EEF8FF_100%)]">
       <AdminSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
@@ -251,12 +251,12 @@ export default function AdminPage() {
 
       <main className="flex-1 min-w-0">
         <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3 rounded-[16px] bg-[linear-gradient(90deg,#F2FBF8,#EAF7FF)] px-5 py-4">
             <div>
-              <h1 className="text-2xl font-semibold text-[#152D28] tracking-tight">
+              <h1 className="text-2xl font-bold text-[#173B3B] tracking-tight">
                 ระบบจัดการวัคซีน
               </h1>
-              <p className="text-sm text-[#5B7B73] mt-0.5">เด็กทั้งหมด {patients.length} คน</p>
+              <p className="text-sm text-[#668585] mt-0.5">เด็กทั้งหมด {patients.length} คน</p>
             </div>
             <div className="flex gap-2 flex-wrap">
               <IconButton onClick={handleNotifyNow} disabled={notifying} icon={<Bell size={16} />} primary>
@@ -272,24 +272,24 @@ export default function AdminPage() {
           </div>
 
           {notifyResult && (
-            <div className="mb-4 rounded-xl bg-white px-4 py-3 text-sm text-[#1E3D36] shadow-sm border border-[#E5ECE9]">
+            <div className="mb-4 rounded-xl bg-white px-4 py-3 text-sm text-[#173B3B] shadow-sm border border-[#DDEEEA]">
               {notifyResult}
             </div>
           )}
 
           <div className="relative mb-4">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8FAAA2]" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A9BBC3]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ค้นหาชื่อเด็กหรือ PID..."
-              className="w-full rounded-xl border border-[#E5ECE9] bg-white pl-10 pr-4 py-2.5 text-sm text-[#1E3D36] placeholder:text-[#A9BDB6] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+              className="w-full rounded-[12px] border border-[#D6ECE7] bg-white pl-10 pr-4 py-2.5 text-sm text-[#173B3B] placeholder:text-[#A4B4B7] shadow-[0_3px_12px_rgba(20,100,90,0.05)] focus:outline-none focus:border-[#5BCBB2] focus:ring-2 focus:ring-[rgba(91,203,178,0.14)]"
             />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-[#E5ECE9] overflow-hidden">
+          <div className="bg-white rounded-[16px] shadow-[0_4px_18px_rgba(20,95,85,0.06)] border border-[#DDEEEA] overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-[#F7FAF9] text-[#5B7B73] text-left text-xs uppercase tracking-wide">
+              <thead className="bg-[linear-gradient(90deg,#E8F8F4,#EEF9FF)] text-[#345B59] text-left text-xs uppercase tracking-wide font-semibold">
                 <tr>
                   <th className="px-5 py-3 font-medium">ชื่อเด็ก</th>
                   <SortableHeader label="PID" sortKey="pid" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
@@ -302,14 +302,14 @@ export default function AdminPage() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-[#5B7B73]">
+                    <td colSpan={6} className="px-5 py-8 text-center text-[#668585]">
                       กำลังโหลด...
                     </td>
                   </tr>
                 )}
                 {!loading && filteredPatients.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-[#5B7B73]">
+                    <td colSpan={6} className="px-5 py-8 text-center text-[#668585]">
                       {search ? "ไม่พบข้อมูลที่ค้นหา" : "ยังไม่มีข้อมูลเด็ก"}
                     </td>
                   </tr>
@@ -320,13 +320,13 @@ export default function AdminPage() {
                     <tr
                       key={p.id}
                       onClick={() => setModalPatientId(p.id)}
-                      className="border-t border-[#EFF4F2] cursor-pointer hover:bg-[#FAFCFB] transition-colors"
+                      className="border-t border-[#E9F2F0] cursor-pointer hover:bg-[#F4FCF9] transition-colors"
                     >
-                      <td className="px-5 py-3.5 text-[#1E3D36] font-medium">
+                      <td className="px-5 py-3.5 text-[#173B3B] font-medium">
                         {displayName(p)}
                       </td>
-                      <td className="px-5 py-3.5 text-[#1E3D36]">{p.queue_code ?? "-"}</td>
-                      <td className="px-5 py-3.5 text-[#5B7B73]">{calculateAge(p.date_of_birth)}</td>
+                      <td className="px-5 py-3.5 text-[#173B3B]">{p.queue_code ?? "-"}</td>
+                      <td className="px-5 py-3.5 text-[#668585]">{calculateAge(p.date_of_birth)}</td>
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${badge.className}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
@@ -335,12 +335,12 @@ export default function AdminPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         {p.linked ? (
-                          <span className="text-[#2F6F62] font-medium">เชื่อมแล้ว</span>
+                          <span className="text-[#159B58] font-semibold">เชื่อมแล้ว</span>
                         ) : (
-                          <span className="text-[#A9BDB6]">ยังไม่เชื่อม</span>
+                          <span className="text-[#A4B4B7]">ยังไม่เชื่อม</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-[#A9BDB6]">
+                      <td className="px-5 py-3.5 text-[#A4B4B7]">
                         <ChevronRight size={16} />
                       </td>
                     </tr>
@@ -397,7 +397,7 @@ function SortableHeader({
     <th className="px-5 py-3 font-medium">
       <button
         onClick={() => onClick(sortKey)}
-        className={`flex items-center gap-1 hover:text-[#1E3D36] transition-colors ${active ? "text-[#1E3D36]" : ""}`}
+        className={`flex items-center gap-1 hover:text-[#173B3B] transition-colors ${active ? "text-[#173B3B]" : ""}`}
       >
         {label}
         <Icon size={13} />
@@ -423,10 +423,10 @@ function IconButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-1.5 rounded-lg text-sm font-medium px-3.5 py-2 disabled:opacity-60 transition-colors ${
+      className={`flex items-center gap-1.5 rounded-[10px] text-sm font-semibold px-3.5 py-2 disabled:opacity-60 transition-all ${
         primary
-          ? "bg-[#2F6F62] text-white hover:bg-[#285F54]"
-          : "border border-[#D8E5E0] text-[#2F6F62] hover:bg-[#EEF5F2]"
+          ? "bg-[#177C6D] text-white shadow-[0_4px_12px_rgba(23,124,109,0.15)] hover:bg-[#12695D] hover:-translate-y-px"
+          : "bg-white border border-[#CFE7E1] text-[#176A60] hover:bg-[#EDFAF6] hover:border-[#71CFB9]"
       }`}
     >
       {icon}
@@ -467,7 +467,7 @@ function AddPatientModal({
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
       <div
-        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-[#0B3D42]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
       />
       <div
@@ -477,23 +477,23 @@ function AddPatientModal({
       >
         <div className="p-6">
           <div className="flex items-start justify-between mb-2">
-            <h2 className="text-lg font-semibold text-[#152D28]">เพิ่มเด็ก</h2>
-            <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+            <h2 className="text-lg font-semibold text-[#0D4A49]">เพิ่มเด็ก</h2>
+            <button onClick={onClose} className="text-[#A9BBC3] hover:text-[#173B3B] p-1">
               <X size={20} />
             </button>
           </div>
-          <p className="text-xs text-[#8FAAA2] mb-4">
+          <p className="text-xs text-[#A9BBC3] mb-4">
             ยังไม่ต้องลงวันนัดตอนนี้ก็ได้ — เพิ่มนัดหมายทีหลังได้จากหน้ารายละเอียดเด็ก
           </p>
 
           <form onSubmit={onSubmit} className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="text-sm text-[#1E3D36] font-medium">คำนำหน้า</span>
+              <span className="text-sm text-[#173B3B] font-medium">คำนำหน้า</span>
               <select
                 required
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
               >
                 <option value="ด.ช.">ด.ช.</option>
                 <option value="ด.ญ.">ด.ญ.</option>
@@ -510,13 +510,13 @@ function AddPatientModal({
               <Input label="ที่อยู่" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
             </div>
 
-            {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
+            {error && <p className="col-span-2 text-sm text-[#D94C58]">{error}</p>}
 
             <div className="col-span-2 flex justify-end gap-2 mt-2">
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+                className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
               >
                 {saving ? "กำลังบันทึก..." : "บันทึก"}
               </button>
@@ -628,7 +628,7 @@ function ImportModal({
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
       <div
-        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-[#0B3D42]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={handleClose}
       />
       <div
@@ -638,43 +638,43 @@ function ImportModal({
       >
         <div className="p-6">
           <div className="flex items-start justify-between mb-2">
-            <h2 className="text-lg font-semibold text-[#152D28]">นำเข้าข้อมูลเด็กจาก Excel</h2>
-            <button onClick={handleClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+            <h2 className="text-lg font-semibold text-[#0D4A49]">นำเข้าข้อมูลเด็กจาก Excel</h2>
+            <button onClick={handleClose} className="text-[#A9BBC3] hover:text-[#173B3B] p-1">
               <X size={20} />
             </button>
           </div>
 
-          <div className="rounded-lg bg-[#F7FAF9] border border-[#E5ECE9] px-4 py-3 mb-4 text-sm text-[#5B7B73]">
+          <div className="rounded-lg bg-[#F2FBF8] border border-[#DDEEEA] px-4 py-3 mb-4 text-sm text-[#668585]">
             <p className="mb-2">
               ไฟล์ต้องมี 9 คอลัมน์ตามลำดับนี้ (แถวแรกเป็นหัวตาราง ไม่ต้องตรงชื่อเป๊ะๆ ก็ได้):
             </p>
-            <p className="font-medium text-[#1E3D36] mb-2">
+            <p className="font-medium text-[#173B3B] mb-2">
               PID · คำนำหน้า (ด.ช./ด.ญ.) · ชื่อเล่น (ไม่บังคับ) · ชื่อ · นามสกุล · วันเกิด · ที่อยู่ · ชื่อผู้ปกครอง (ไม่บังคับ) · เบอร์โทร (ไม่บังคับ)
             </p>
-            <button onClick={downloadTemplate} className="text-[#2F6F62] font-medium hover:underline">
+            <button onClick={downloadTemplate} className="text-[#177C6D] font-medium hover:underline">
               ดาวน์โหลดแม่แบบ Excel
             </button>
           </div>
 
           <label className="block mb-4">
-            <span className="text-sm text-[#1E3D36] font-medium">เลือกไฟล์ (.xlsx หรือ .csv)</span>
+            <span className="text-sm text-[#173B3B] font-medium">เลือกไฟล์ (.xlsx หรือ .csv)</span>
             <input
               type="file"
               accept=".xlsx,.xls,.csv"
               onChange={handleFile}
-              className="mt-1 w-full text-sm text-[#1E3D36]"
+              className="mt-1 w-full text-sm text-[#173B3B]"
             />
-            {fileName && <p className="text-xs text-[#8FAAA2] mt-1">ไฟล์ที่เลือก: {fileName}</p>}
+            {fileName && <p className="text-xs text-[#A9BBC3] mt-1">ไฟล์ที่เลือก: {fileName}</p>}
           </label>
 
-          {parseError && <p className="text-sm text-[#B3452E] mb-4">{parseError}</p>}
+          {parseError && <p className="text-sm text-[#D94C58] mb-4">{parseError}</p>}
 
           {rows.length > 0 && !result && (
             <div className="mb-4">
-              <p className="text-sm text-[#1E3D36] font-medium mb-2">พบข้อมูล {rows.length} แถว (แสดงตัวอย่าง 5 แถวแรก)</p>
-              <div className="overflow-x-auto rounded-lg border border-[#E5ECE9]">
+              <p className="text-sm text-[#173B3B] font-medium mb-2">พบข้อมูล {rows.length} แถว (แสดงตัวอย่าง 5 แถวแรก)</p>
+              <div className="overflow-x-auto rounded-lg border border-[#DDEEEA]">
                 <table className="w-full text-xs">
-                  <thead className="bg-[#F7FAF9] text-[#5B7B73]">
+                  <thead className="bg-[linear-gradient(90deg,#E8F8F4,#EEF9FF)] text-[#345B59]">
                     <tr>
                       <th className="px-3 py-2 text-left">PID</th>
                       <th className="px-3 py-2 text-left">ชื่อ-นามสกุล</th>
@@ -684,7 +684,7 @@ function ImportModal({
                   </thead>
                   <tbody>
                     {rows.slice(0, 5).map((r, i) => (
-                      <tr key={i} className="border-t border-[#EFF4F2]">
+                      <tr key={i} className="border-t border-[#E9F2F0]">
                         <td className="px-3 py-2">{r.pid}</td>
                         <td className="px-3 py-2">{r.title}{r.firstName} {r.lastName}</td>
                         <td className="px-3 py-2">{r.dateOfBirth}</td>
@@ -697,7 +697,7 @@ function ImportModal({
               <button
                 onClick={handleImport}
                 disabled={importing}
-                className="mt-4 rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
+                className="mt-4 rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
               >
                 {importing ? "กำลังนำเข้า..." : `นำเข้า ${rows.length} รายการ`}
               </button>
@@ -706,11 +706,11 @@ function ImportModal({
 
           {result && (
             <div className="space-y-3">
-              <div className="rounded-lg bg-[#E4F3EC] text-[#2F6F62] px-4 py-3 text-sm">
+              <div className="rounded-lg bg-[#DDF5EC] text-[#177C6D] px-4 py-3 text-sm">
                 นำเข้าสำเร็จ {result.imported} จาก {result.total} รายการ
               </div>
               {result.failed.length > 0 && (
-                <div className="rounded-lg bg-[#FBE4E0] px-4 py-3 text-sm text-[#B3452E]">
+                <div className="rounded-lg bg-[#FFE6E6] px-4 py-3 text-sm text-[#D94C58]">
                   <p className="font-medium mb-1">รายการที่ไม่สำเร็จ ({result.failed.length}):</p>
                   <ul className="space-y-0.5">
                     {result.failed.map((f, i) => (
@@ -721,7 +721,7 @@ function ImportModal({
               )}
               <button
                 onClick={handleClose}
-                className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5"
+                className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2.5"
               >
                 เสร็จสิ้น
               </button>
@@ -747,7 +747,7 @@ function PatientModal({
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
       <div
-        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-[#0B3D42]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
       />
       <div
@@ -759,10 +759,10 @@ function PatientModal({
           <div className="p-6">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <Baby size={20} className="text-[#2F6F62]" />
-                <h2 className="text-lg font-semibold text-[#152D28]">ข้อมูลเด็ก</h2>
+                <Baby size={20} className="text-[#177C6D]" />
+                <h2 className="text-lg font-semibold text-[#0D4A49]">ข้อมูลเด็ก</h2>
               </div>
-              <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+              <button onClick={onClose} className="text-[#A9BBC3] hover:text-[#173B3B] p-1">
                 <X size={20} />
               </button>
             </div>
@@ -777,9 +777,9 @@ function PatientModal({
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-start gap-2.5 text-sm py-1.5">
-      <span className="text-[#8FAAA2] mt-0.5">{icon}</span>
-      <span className="text-[#5B7B73] w-28 shrink-0">{label}</span>
-      <span className="text-[#1E3D36]">{value || "-"}</span>
+      <span className="text-[#A9BBC3] mt-0.5">{icon}</span>
+      <span className="text-[#668585] w-28 shrink-0">{label}</span>
+      <span className="text-[#173B3B]">{value || "-"}</span>
     </div>
   );
 }
@@ -935,25 +935,25 @@ function PatientDetail({
   const isOverdue = nextAppt ? nextAppt.appointment_date < new Date().toISOString().slice(0, 10) : false;
 
   const addApptForm = (
-    <form onSubmit={addAppointment} className="flex gap-2 items-end flex-wrap mb-3 bg-white/70 border border-[#D8E5E0] rounded-xl p-3">
+    <form onSubmit={addAppointment} className="flex gap-2 items-end flex-wrap mb-3 bg-white/70 border border-[#CFE7E1] rounded-xl p-3">
       <label className="block">
-        <span className="text-sm text-[#1E3D36] font-medium">วันนัด</span>
+        <span className="text-sm text-[#173B3B] font-medium">วันนัด</span>
         <input
           required
           type="date"
           value={newAppt.appointmentDate}
           onChange={(e) => setNewAppt({ ...newAppt, appointmentDate: e.target.value })}
-          className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+          className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
         />
       </label>
       <label className="block">
-        <span className="text-sm text-[#1E3D36] font-medium">ชื่อวัคซีน</span>
+        <span className="text-sm text-[#173B3B] font-medium">ชื่อวัคซีน</span>
         {vaccineOptions.length > 0 ? (
           <select
             required
             value={newAppt.vaccineName}
             onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+            className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
           >
             <option value="" disabled>เลือกวัคซีน</option>
             {vaccineOptions.map((v) => (
@@ -965,21 +965,21 @@ function PatientDetail({
             required
             value={newAppt.vaccineName}
             onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+            className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
           />
         )}
       </label>
       <label className="block w-20">
-        <span className="text-sm text-[#1E3D36] font-medium">เข็มที่</span>
+        <span className="text-sm text-[#173B3B] font-medium">เข็มที่</span>
         <input
           type="number"
           min={1}
           value={newAppt.doseNumber}
           onChange={(e) => setNewAppt({ ...newAppt, doseNumber: e.target.value })}
-          className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+          className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
         />
       </label>
-      <button type="submit" className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5">
+      <button type="submit" className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2.5">
         บันทึก
       </button>
     </form>
@@ -989,14 +989,14 @@ function PatientDetail({
     <div className="grid md:grid-cols-2 gap-5">
       {/* LEFT COLUMN */}
       <div className="space-y-4">
-        <div className="rounded-xl bg-[#F7FAF9] border border-[#E5ECE9] p-4">
+        <div className="rounded-xl bg-[#F2FBF8] border border-[#DDEEEA] p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-14 h-14 rounded-full bg-[#DCEEE7] flex items-center justify-center shrink-0">
-              <Baby size={28} className="text-[#2F6F62]" />
+            <div className="w-14 h-14 rounded-full bg-[#DDF7EF] flex items-center justify-center shrink-0">
+              <Baby size={28} className="text-[#177C6D]" />
             </div>
             <div>
-              <div className="font-semibold text-[#152D28]">{displayName(patient)}</div>
-              <div className="text-xs text-[#5B7B73]">PID: {patient.queue_code ?? "-"}</div>
+              <div className="font-semibold text-[#0D4A49]">{displayName(patient)}</div>
+              <div className="text-xs text-[#668585]">PID: {patient.queue_code ?? "-"}</div>
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${badge.className}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
                 {badge.label}
@@ -1006,7 +1006,7 @@ function PatientDetail({
 
           {!editing ? (
             <>
-              <div className="divide-y divide-[#EFF4F2]">
+              <div className="divide-y divide-[#E9F2F0]">
                 <InfoRow icon={<User size={15} />} label="ชื่อเล่น" value={patient.nickname ?? ""} />
                 <InfoRow icon={<Cake size={15} />} label="วันเกิด" value={`${patient.date_of_birth} (อายุ ${calculateAge(patient.date_of_birth)})`} />
                 <InfoRow icon={<User size={15} />} label="ชื่อผู้ปกครอง" value={patient.guardian_name ?? ""} />
@@ -1022,7 +1022,7 @@ function PatientDetail({
                     ยกเลิกเชื่อม LINE
                   </SmallButton>
                 ) : (
-                  <span className="text-xs text-[#A9BDB6] flex items-center px-2.5">ยังไม่เชื่อม LINE</span>
+                  <span className="text-xs text-[#A4B4B7] flex items-center px-2.5">ยังไม่เชื่อม LINE</span>
                 )}
                 <SmallButton onClick={deletePatient} icon={<Trash2 size={14} />} tone="danger">
                   ลบเด็กคนนี้
@@ -1030,13 +1030,13 @@ function PatientDetail({
               </div>
             </>
           ) : (
-            <form onSubmit={saveEdit} className="grid grid-cols-2 gap-3 bg-white border border-[#E5ECE9] rounded-xl p-3">
+            <form onSubmit={saveEdit} className="grid grid-cols-2 gap-3 bg-white border border-[#DDEEEA] rounded-xl p-3">
               <label className="block">
-                <span className="text-sm text-[#1E3D36] font-medium">คำนำหน้า</span>
+                <span className="text-sm text-[#173B3B] font-medium">คำนำหน้า</span>
                 <select
                   value={edit.title}
                   onChange={(e) => setEdit({ ...edit, title: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                  className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
                 >
                   <option value="ด.ช.">ด.ช.</option>
                   <option value="ด.ญ.">ด.ญ.</option>
@@ -1052,15 +1052,15 @@ function PatientDetail({
               <div className="col-span-2">
                 <Input label="ที่อยู่" value={edit.address} onChange={(v) => setEdit({ ...edit, address: v })} />
               </div>
-              {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
+              {error && <p className="col-span-2 text-sm text-[#D94C58]">{error}</p>}
               <div className="col-span-2 flex justify-end gap-2">
-                <button type="button" onClick={() => setEditing(false)} className="text-sm text-[#5B7B73] px-3 py-2">
+                <button type="button" onClick={() => setEditing(false)} className="text-sm text-[#668585] px-3 py-2">
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+                  className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
                 >
                   {saving ? "กำลังบันทึก..." : "บันทึก"}
                 </button>
@@ -1070,23 +1070,23 @@ function PatientDetail({
         </div>
 
         {/* All appointments — compact list */}
-        <div className="rounded-xl bg-white border border-[#E5ECE9] p-4">
+        <div className="rounded-xl bg-white border border-[#DDEEEA] p-4">
           <div className="flex items-center gap-2 mb-2">
-            <CalendarPlus size={16} className="text-[#2F6F62]" />
-            <span className="text-sm font-semibold text-[#152D28]">นัดหมายทั้งหมด</span>
+            <CalendarPlus size={16} className="text-[#177C6D]" />
+            <span className="text-sm font-semibold text-[#0D4A49]">นัดหมายทั้งหมด</span>
           </div>
           {patient.appointments.length === 0 ? (
-            <p className="text-sm text-[#A9BDB6]">ยังไม่มีนัดหมาย</p>
+            <p className="text-sm text-[#A4B4B7]">ยังไม่มีนัดหมาย</p>
           ) : (
-            <div className="divide-y divide-[#EFF4F2]">
+            <div className="divide-y divide-[#E9F2F0]">
               {[...patient.appointments]
                 .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date))
                 .map((a) => (
                   <div key={a.id} className="flex items-center justify-between py-2 text-sm">
                     <div>
-                      <div className="text-[#1E3D36]">{a.appointment_date} · {a.vaccine_name}{a.dose_number ? ` (เข็มที่ ${a.dose_number})` : ""}</div>
+                      <div className="text-[#173B3B]">{a.appointment_date} · {a.vaccine_name}{a.dose_number ? ` (เข็มที่ ${a.dose_number})` : ""}</div>
                     </div>
-                    <span className={a.status === "completed" ? "text-[#2F6F62] text-xs" : "text-[#8FAAA2] text-xs"}>
+                    <span className={a.status === "completed" ? "text-[#177C6D] text-xs" : "text-[#A9BBC3] text-xs"}>
                       {STATUS_LABEL[a.status] ?? a.status}
                     </span>
                   </div>
@@ -1098,11 +1098,11 @@ function PatientDetail({
 
       {/* RIGHT COLUMN */}
       <div className="space-y-4">
-        <div className="rounded-xl bg-[#EAF3FB] border border-[#CFE3F5] p-4">
+        <div className="rounded-xl bg-[#EAF7FF] border border-[#D6ECE7] p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <CalendarPlus size={16} className="text-[#2A6AA8]" />
-              <span className="text-sm font-semibold text-[#152D28]">นัดหมายครั้งถัดไป</span>
+              <CalendarPlus size={16} className="text-[#177C6D]" />
+              <span className="text-sm font-semibold text-[#0D4A49]">นัดหมายครั้งถัดไป</span>
             </div>
             <SmallButton onClick={() => setShowAddAppt((v) => !v)} icon={<Plus size={14} />}>
               ทำนัดใหม่
@@ -1113,13 +1113,13 @@ function PatientDetail({
 
           {nextAppt ? (
             <div>
-              <div className="text-[#152D28] font-medium">{nextAppt.appointment_date}</div>
-              <div className="text-sm text-[#1E3D36] mt-1">
+              <div className="text-[#0D4A49] font-medium">{nextAppt.appointment_date}</div>
+              <div className="text-sm text-[#173B3B] mt-1">
                 วัคซีน: {nextAppt.vaccine_name}{nextAppt.dose_number ? ` (เข็มที่ ${nextAppt.dose_number})` : ""}
               </div>
-              {clinicName && <div className="text-sm text-[#1E3D36] flex items-center gap-1 mt-1"><MapPin size={14} />{clinicName}</div>}
+              {clinicName && <div className="text-sm text-[#173B3B] flex items-center gap-1 mt-1"><MapPin size={14} />{clinicName}</div>}
               <div className="mt-2">
-                <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${isOverdue ? "bg-[#FBE4E0] text-[#B3452E]" : "bg-white text-[#2A6AA8]"}`}>
+                <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${isOverdue ? "bg-[#FFE6E6] text-[#D94C58]" : "bg-white text-[#177C6D]"}`}>
                   {isOverdue ? "เลยกำหนดนัด" : "ยังไม่ถึงกำหนด"}
                 </span>
               </div>
@@ -1136,25 +1136,25 @@ function PatientDetail({
               </div>
             </div>
           ) : (
-            !showAddAppt && <p className="text-sm text-[#5B7B73]">ไม่มีนัดที่ต้องติดตามตอนนี้</p>
+            !showAddAppt && <p className="text-sm text-[#668585]">ไม่มีนัดที่ต้องติดตามตอนนี้</p>
           )}
         </div>
 
-        <div className="rounded-xl bg-white border border-[#E5ECE9] p-4">
-          <span className="text-sm font-semibold text-[#152D28]">ประวัติการรับวัคซีน</span>
+        <div className="rounded-xl bg-white border border-[#DDEEEA] p-4">
+          <span className="text-sm font-semibold text-[#0D4A49]">ประวัติการรับวัคซีน</span>
           {completedAppointments.length === 0 ? (
-            <p className="text-sm text-[#A9BDB6] mt-2">ยังไม่มีประวัติการรับวัคซีน</p>
+            <p className="text-sm text-[#A4B4B7] mt-2">ยังไม่มีประวัติการรับวัคซีน</p>
           ) : (
-            <div className="mt-2 divide-y divide-[#EFF4F2]">
+            <div className="mt-2 divide-y divide-[#E9F2F0]">
               {completedAppointments.map((a) => (
                 <div key={a.id} className="flex items-center justify-between py-2 text-sm">
                   <div>
-                    <div className="text-[#1E3D36]">
+                    <div className="text-[#173B3B]">
                       {a.received_date ?? a.appointment_date} · {a.vaccine_name}{a.dose_number ? ` (เข็มที่ ${a.dose_number})` : ""}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="inline-flex items-center gap-1 text-xs text-[#2F6F62]">
+                    <span className="inline-flex items-center gap-1 text-xs text-[#177C6D]">
                       <CheckCircle2 size={13} /> รับแล้ว
                     </span>
                     <button onClick={() => revertReceived(a.id)} title="ยกเลิก (ยังไม่ได้รับ)" className="text-[#946B1C] hover:bg-[#FCF1D9] rounded p-1">
@@ -1184,10 +1184,10 @@ function SmallButton({
 }) {
   const toneClass =
     tone === "danger"
-      ? "text-[#B3452E] hover:bg-[#FBE4E0]"
+      ? "text-[#D94C58] hover:bg-[#FFE6E6]"
       : tone === "warning"
       ? "text-[#946B1C] hover:bg-[#FCF1D9]"
-      : "text-[#2F6F62] hover:bg-[#E4F3EC]";
+      : "text-[#177C6D] hover:bg-[#DDF5EC]";
   return (
     <button
       onClick={onClick}
@@ -1214,13 +1214,13 @@ function Input({
 }) {
   return (
     <label className="block">
-      <span className="text-sm text-[#1E3D36] font-medium">{label}</span>
+      <span className="text-sm text-[#173B3B] font-medium">{label}</span>
       <input
         required={required}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+        className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
       />
     </label>
   );

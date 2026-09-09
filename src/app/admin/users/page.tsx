@@ -91,7 +91,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F3F7F5]">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#F4FCFA_0%,#ECFAF6_45%,#EEF8FF_100%)]">
       <AdminSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((v) => !v)}
@@ -104,38 +104,38 @@ export default function UsersPage() {
 
       <main className="flex-1 min-w-0">
         <div className="max-w-3xl mx-auto px-6 py-8">
-          <h1 className="text-2xl font-semibold text-[#152D28] tracking-tight mb-1">ผู้ใช้แอดมิน</h1>
-          <p className="text-sm text-[#5B7B73] mb-6">จัดการบัญชีและสิทธิ์การใช้งานระบบ</p>
+          <h1 className="text-2xl font-semibold text-[#0D4A49] tracking-tight mb-1">ผู้ใช้แอดมิน</h1>
+          <p className="text-sm text-[#668585] mb-6">จัดการบัญชีและสิทธิ์การใช้งานระบบ</p>
 
           <form
             onSubmit={handleAddUser}
-            className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#E5ECE9] flex gap-3 items-end flex-wrap"
+            className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-[#DDEEEA] flex gap-3 items-end flex-wrap"
           >
             <label className="block">
-              <span className="text-sm text-[#1E3D36] font-medium">ชื่อผู้ใช้ใหม่</span>
+              <span className="text-sm text-[#173B3B] font-medium">ชื่อผู้ใช้ใหม่</span>
               <input
                 required
                 value={newUser.username}
                 onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
               />
             </label>
             <label className="block">
-              <span className="text-sm text-[#1E3D36] font-medium">รหัสผ่าน (8 ตัวขึ้นไป)</span>
+              <span className="text-sm text-[#173B3B] font-medium">รหัสผ่าน (8 ตัวขึ้นไป)</span>
               <input
                 required
                 type="password"
                 value={newUser.password}
                 onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
               />
             </label>
             <label className="block">
-              <span className="text-sm text-[#1E3D36] font-medium">สิทธิ์</span>
+              <span className="text-sm text-[#173B3B] font-medium">สิทธิ์</span>
               <select
                 value={newUser.role}
                 onChange={(e) => setNewUser({ ...newUser, role: e.target.value as "admin" | "staff" })}
-                className="mt-1 rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                className="mt-1 rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
               >
                 <option value="staff">เจ้าหน้าที่</option>
                 <option value="admin">แอดมิน</option>
@@ -144,16 +144,16 @@ export default function UsersPage() {
             <button
               type="submit"
               disabled={userSaving}
-              className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
+              className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2.5 disabled:opacity-60"
             >
               {userSaving ? "กำลังบันทึก..." : "เพิ่มผู้ใช้"}
             </button>
-            {userError && <p className="w-full text-sm text-[#B3452E]">{userError}</p>}
+            {userError && <p className="w-full text-sm text-[#D94C58]">{userError}</p>}
           </form>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-[#E5ECE9] overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-[#DDEEEA] overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-[#F7FAF9] text-[#5B7B73] text-left text-xs uppercase tracking-wide">
+              <thead className="bg-[#F2FBF8] text-[#668585] text-left text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-5 py-3 font-medium">ชื่อผู้ใช้</th>
                   <th className="px-5 py-3 font-medium">สิทธิ์</th>
@@ -164,32 +164,32 @@ export default function UsersPage() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-[#5B7B73]">
+                    <td colSpan={4} className="px-5 py-8 text-center text-[#668585]">
                       กำลังโหลด...
                     </td>
                   </tr>
                 )}
                 {!loading && users.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-[#5B7B73]">
+                    <td colSpan={4} className="px-5 py-8 text-center text-[#668585]">
                       ยังไม่มีผู้ใช้
                     </td>
                   </tr>
                 )}
                 {users.map((u) => (
-                  <tr key={u.id} className="border-t border-[#EFF4F2]">
-                    <td className="px-5 py-3.5 text-[#1E3D36] font-medium">{u.username}</td>
+                  <tr key={u.id} className="border-t border-[#E9F2F0]">
+                    <td className="px-5 py-3.5 text-[#173B3B] font-medium">{u.username}</td>
                     <td className="px-5 py-3.5">
                       <select
                         value={u.role}
                         onChange={(e) => changeRole(u.id, e.target.value as "admin" | "staff")}
-                        className="rounded-lg border border-[#D8E5E0] px-2 py-1.5 text-sm text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                        className="rounded-lg border border-[#CFE7E1] px-2 py-1.5 text-sm text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
                       >
                         <option value="staff">{ROLE_LABEL.staff}</option>
                         <option value="admin">{ROLE_LABEL.admin}</option>
                       </select>
                     </td>
-                    <td className="px-5 py-3.5 text-[#5B7B73]">
+                    <td className="px-5 py-3.5 text-[#668585]">
                       {new Date(u.created_at).toLocaleDateString("th-TH")}
                     </td>
                     <td className="px-5 py-3.5">
@@ -199,13 +199,13 @@ export default function UsersPage() {
                             setResetUserId(u.id);
                             setResetUsername(u.username);
                           }}
-                          className="flex items-center gap-1.5 text-sm text-[#2F6F62] hover:bg-[#E4F3EC] rounded-lg px-2 py-1.5"
+                          className="flex items-center gap-1.5 text-sm text-[#177C6D] hover:bg-[#DDF5EC] rounded-lg px-2 py-1.5"
                         >
                           <KeyRound size={14} /> เปลี่ยนรหัสผ่าน
                         </button>
                         <button
                           onClick={() => deleteUser(u.id, u.username)}
-                          className="flex items-center gap-1.5 text-sm text-[#B3452E] hover:bg-[#FBE4E0] rounded-lg px-2 py-1.5"
+                          className="flex items-center gap-1.5 text-sm text-[#D94C58] hover:bg-[#FFE6E6] rounded-lg px-2 py-1.5"
                         >
                           <Trash2 size={14} /> ลบ
                         </button>
@@ -273,7 +273,7 @@ function ResetPasswordModal({
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? "" : "pointer-events-none"}`}>
       <div
-        className={`absolute inset-0 bg-[#0F241F]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-[#0B3D42]/40 transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
       />
       <div
@@ -283,19 +283,19 @@ function ResetPasswordModal({
       >
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[#152D28]">เปลี่ยนรหัสผ่าน</h2>
-            <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
+            <h2 className="text-lg font-semibold text-[#0D4A49]">เปลี่ยนรหัสผ่าน</h2>
+            <button onClick={onClose} className="text-[#A9BBC3] hover:text-[#173B3B] p-1">
               <X size={20} />
             </button>
           </div>
-          <p className="text-sm text-[#5B7B73] mb-4">สำหรับผู้ใช้ &quot;{username}&quot;</p>
+          <p className="text-sm text-[#668585] mb-4">สำหรับผู้ใช้ &quot;{username}&quot;</p>
 
           {done ? (
             <div className="space-y-4">
-              <p className="text-sm text-[#2F6F62]">เปลี่ยนรหัสผ่านสำเร็จ</p>
+              <p className="text-sm text-[#177C6D]">เปลี่ยนรหัสผ่านสำเร็จ</p>
               <button
                 onClick={onClose}
-                className="w-full rounded-lg bg-[#2F6F62] text-white text-sm font-medium py-2.5"
+                className="w-full rounded-lg bg-[#177C6D] text-white text-sm font-medium py-2.5"
               >
                 ปิด
               </button>
@@ -303,20 +303,20 @@ function ResetPasswordModal({
           ) : (
             <form onSubmit={handleSave} className="space-y-4">
               <label className="block">
-                <span className="text-sm text-[#1E3D36] font-medium">รหัสผ่านใหม่ (8 ตัวขึ้นไป)</span>
+                <span className="text-sm text-[#173B3B] font-medium">รหัสผ่านใหม่ (8 ตัวขึ้นไป)</span>
                 <input
                   required
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                  className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
                 />
               </label>
-              {error && <p className="text-sm text-[#B3452E]">{error}</p>}
+              {error && <p className="text-sm text-[#D94C58]">{error}</p>}
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full rounded-lg bg-[#2F6F62] text-white text-sm font-medium py-2.5 disabled:opacity-60"
+                className="w-full rounded-lg bg-[#177C6D] text-white text-sm font-medium py-2.5 disabled:opacity-60"
               >
                 {saving ? "กำลังบันทึก..." : "บันทึกรหัสผ่านใหม่"}
               </button>

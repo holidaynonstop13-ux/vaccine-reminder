@@ -48,7 +48,7 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen bg-[#1E3D36] flex items-center justify-center px-5">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#0D4A49_0%,#0B3D42_100%)] flex items-center justify-center px-5">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-6">
           <ShieldIcon />
@@ -60,32 +60,32 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-lg space-y-4">
           <label className="block">
-            <span className="text-sm text-[#1E3D36] font-medium">ชื่อผู้ใช้</span>
+            <span className="text-sm text-[#173B3B] font-medium">ชื่อผู้ใช้</span>
             <input
               required
               autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2.5 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+              className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2.5 text-[#173B3B] focus:outline-none focus:border-[#5BCBB2] focus:ring-2 focus:ring-[rgba(91,203,178,0.14)]"
             />
           </label>
           <label className="block">
-            <span className="text-sm text-[#1E3D36] font-medium">รหัสผ่าน</span>
+            <span className="text-sm text-[#173B3B] font-medium">รหัสผ่าน</span>
             <input
               required
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2.5 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+              className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2.5 text-[#173B3B] focus:outline-none focus:border-[#5BCBB2] focus:ring-2 focus:ring-[rgba(91,203,178,0.14)]"
             />
           </label>
 
-          {error && <p className="text-sm text-[#B3452E]">{error}</p>}
+          {error && <p className="text-sm text-[#D94C58]">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-[#2F6F62] text-white font-medium py-3 disabled:opacity-60"
+            className="w-full rounded-[10px] bg-[#177C6D] text-white font-semibold py-3 shadow-[0_4px_12px_rgba(23,124,109,0.15)] hover:bg-[#12695D] transition-colors disabled:opacity-60"
           >
             {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
           </button>
@@ -108,11 +108,11 @@ function ShieldIcon() {
     <svg width="48" height="48" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M28 4L48 12V26C48 38 39.5 47.5 28 52C16.5 47.5 8 38 8 26V12L28 4Z"
-        fill="#5DCAA5"
+        fill="#24B89A"
       />
       <path
         d="M19 27L25 33L37 21"
-        stroke="#1E3D36"
+        stroke="#173B3B"
         strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
