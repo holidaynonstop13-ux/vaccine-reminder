@@ -10,6 +10,7 @@ export async function PATCH(
 
   const update: Record<string, string> = {};
   if (body.title !== undefined) update.title = body.title;
+  if (body.nickname !== undefined) update.nickname = body.nickname;
   if (body.firstName !== undefined) update.first_name = body.firstName;
   if (body.lastName !== undefined) update.last_name = body.lastName;
   if (body.dateOfBirth !== undefined) update.date_of_birth = body.dateOfBirth;

@@ -18,6 +18,7 @@ export default function SettingsPage() {
     overdue_threshold_days: "3",
     auto_send_enabled: "true",
     vaccine_list: "",
+    visit_note: "",
   });
 
   useEffect(() => {
@@ -106,6 +107,19 @@ export default function SettingsPage() {
                 />
                 <p className="text-xs text-[#8FAAA2] mt-1">
                   รายชื่อนี้จะขึ้นเป็นเมนูให้เลือกตอนลงวันนัด/ชื่อวัคซีนของเด็กแต่ละคน
+                </p>
+              </div>
+
+              <div>
+                <span className="text-sm text-[#1E3D36] font-medium">ข้อความแจ้งเตือนในหน้าประวัติเด็ก</span>
+                <textarea
+                  value={values.visit_note}
+                  onChange={(e) => setValues({ ...values, visit_note: e.target.value })}
+                  rows={3}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] text-sm focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                />
+                <p className="text-xs text-[#8FAAA2] mt-1">
+                  ขึ้นเป็นกล่องแจ้งเตือนสีเหลืองในหน้ารายละเอียดเด็กแต่ละคน (เช่น เอกสารที่ต้องเตรียมมา)
                 </p>
               </div>
 

@@ -8,11 +8,12 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json();
 
-  const update: Record<string, string | null> = {};
+  const update: Record<string, string | number | null> = {};
   if (body.status !== undefined) update.status = body.status;
   if (body.receivedDate !== undefined) update.received_date = body.receivedDate;
   if (body.appointmentDate !== undefined) update.appointment_date = body.appointmentDate;
   if (body.vaccineName !== undefined) update.vaccine_name = body.vaccineName;
+  if (body.doseNumber !== undefined) update.dose_number = body.doseNumber;
 
   const { error } = await supabaseAdmin.from("appointments").update(update).eq("id", id);
 

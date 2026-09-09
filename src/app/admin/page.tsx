@@ -19,6 +19,13 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  Baby,
+  Cake,
+  Phone,
+  MapPin,
+  User,
+  AlertTriangle,
+  CalendarPlus,
 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import * as XLSX from "xlsx";
@@ -29,11 +36,13 @@ type Appointment = {
   vaccine_name: string;
   status: string;
   received_date: string | null;
+  dose_number: number | null;
 };
 
 type Patient = {
   id: string;
   title: string | null;
+  nickname: string | null;
   first_name: string;
   last_name: string;
   guardian_name: string | null;
@@ -118,6 +127,7 @@ export default function AdminPage() {
 
   const [form, setForm] = useState({
     title: "ด.ช.",
+    nickname: "",
     firstName: "",
     lastName: "",
     dateOfBirth: "",
@@ -191,6 +201,7 @@ export default function AdminPage() {
 
     setForm({
       title: "ด.ช.",
+      nickname: "",
       firstName: "",
       lastName: "",
       dateOfBirth: "",
@@ -427,6 +438,7 @@ function IconButton({
 
 type FormState = {
   title: string;
+  nickname: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -489,6 +501,7 @@ function AddPatientModal({
               </select>
             </label>
             <Input label="ชื่อเด็ก" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })} />
+            <Input label="ชื่อเล่น (ไม่บังคับ)" value={form.nickname} onChange={(v) => setForm({ ...form, nickname: v })} required={false} />
             <Input label="นามสกุลเด็ก" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })} />
             <Input label="วันเกิด" type="date" value={form.dateOfBirth} onChange={(v) => setForm({ ...form, dateOfBirth: v })} />
             <Input label="ชื่อผู้ปกครอง (ไม่บังคับ)" value={form.guardianName} onChange={(v) => setForm({ ...form, guardianName: v })} required={false} />
@@ -738,18 +751,16 @@ function PatientModal({
         onClick={onClose}
       />
       <div
-        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto transition-all duration-150 ${
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-y-auto transition-all duration-150 ${
           open ? "opacity-100 scale-100" : "opacity-0 scale-95"
         }`}
       >
         {patient && (
           <div className="p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-[#152D28]">
-                  {displayName(patient)}
-                </h2>
-                <p className="text-sm text-[#5B7B73] mt-0.5">PID: {patient.queue_code ?? "-"}</p>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Baby size={20} className="text-[#2F6F62]" />
+                <h2 className="text-lg font-semibold text-[#152D28]">ข้อมูลเด็ก</h2>
               </div>
               <button onClick={onClose} className="text-[#8FAAA2] hover:text-[#1E3D36] p-1">
                 <X size={20} />
@@ -759,6 +770,16 @@ function PatientModal({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2.5 text-sm py-1.5">
+      <span className="text-[#8FAAA2] mt-0.5">{icon}</span>
+      <span className="text-[#5B7B73] w-28 shrink-0">{label}</span>
+      <span className="text-[#1E3D36]">{value || "-"}</span>
     </div>
   );
 }
@@ -775,6 +796,7 @@ function PatientDetail({
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState({
     title: patient.title ?? "ด.ช.",
+    nickname: patient.nickname ?? "",
     firstName: patient.first_name,
     lastName: patient.last_name,
     dateOfBirth: patient.date_of_birth,
@@ -787,12 +809,15 @@ function PatientDetail({
   const [saving, setSaving] = useState(false);
 
   const [showAddAppt, setShowAddAppt] = useState(false);
-  const [newAppt, setNewAppt] = useState({ appointmentDate: "", vaccineName: "" });
+  const [newAppt, setNewAppt] = useState({ appointmentDate: "", vaccineName: "", doseNumber: "" });
   const [vaccineOptions, setVaccineOptions] = useState<string[]>([]);
+  const [clinicName, setClinicName] = useState("");
+  const [visitNote, setVisitNote] = useState("");
 
   useEffect(() => {
     setEdit({
       title: patient.title ?? "ด.ช.",
+      nickname: patient.nickname ?? "",
       firstName: patient.first_name,
       lastName: patient.last_name,
       dateOfBirth: patient.date_of_birth,
@@ -813,6 +838,8 @@ function PatientDetail({
           .map((s: string) => s.trim())
           .filter(Boolean);
         setVaccineOptions(list);
+        setClinicName(data.settings?.clinic_name ?? "");
+        setVisitNote(data.settings?.visit_note ?? "");
       });
   }, []);
 
@@ -854,9 +881,14 @@ function PatientDetail({
     await fetch("/api/admin/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patientId: patient.id, ...newAppt }),
+      body: JSON.stringify({
+        patientId: patient.id,
+        appointmentDate: newAppt.appointmentDate,
+        vaccineName: newAppt.vaccineName,
+        doseNumber: newAppt.doseNumber ? Number(newAppt.doseNumber) : null,
+      }),
     });
-    setNewAppt({ appointmentDate: "", vaccineName: "" });
+    setNewAppt({ appointmentDate: "", vaccineName: "", doseNumber: "" });
     setShowAddAppt(false);
     onChanged();
   }
@@ -872,7 +904,7 @@ function PatientDetail({
   }
 
   async function revertReceived(apptId: string) {
-    if (!confirm("เปลี่ยนกลับเป็น \"ยังไม่ได้รับวัคซีน\" สำหรับนัดนี้?")) return;
+    if (!confirm('เปลี่ยนกลับเป็น "ยังไม่ได้รับวัคซีน" สำหรับนัดนี้?')) return;
     await fetch(`/api/admin/appointments/${apptId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -894,158 +926,254 @@ function PatientDetail({
     onChanged();
   }
 
-  return (
-    <div className="space-y-6">
-      {!editing ? (
-        <div className="rounded-xl bg-[#F7FAF9] border border-[#E5ECE9] p-4">
-          <div className="text-sm text-[#5B7B73] space-y-0.5 mb-3">
-            <div>ผู้ปกครอง: {patient.guardian_name || "-"} · {patient.guardian_phone || "-"}</div>
-            <div>
-              วันเกิด: {patient.date_of_birth} · อายุ {calculateAge(patient.date_of_birth)}
-            </div>
-            {patient.address && <div>ที่อยู่: {patient.address}</div>}
-            <div>
-              LINE:{" "}
-              {patient.linked ? (
-                <span className="text-[#2F6F62] font-medium">เชื่อมแล้ว</span>
-              ) : (
-                <span className="text-[#A9BDB6]">ยังไม่เชื่อม</span>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <SmallButton onClick={() => setEditing(true)} icon={<Pencil size={14} />}>
-              แก้ไขข้อมูล
-            </SmallButton>
-            {patient.linked && (
-              <SmallButton onClick={unlinkLine} icon={<Unlink size={14} />} tone="warning">
-                ยกเลิกเชื่อม LINE
-              </SmallButton>
-            )}
-            <SmallButton onClick={deletePatient} icon={<Trash2 size={14} />} tone="danger">
-              ลบเด็กคนนี้
-            </SmallButton>
-          </div>
-        </div>
-      ) : (
-        <form onSubmit={saveEdit} className="grid grid-cols-2 gap-3 bg-[#F7FAF9] border border-[#E5ECE9] rounded-xl p-4">
-          <label className="block">
-            <span className="text-sm text-[#1E3D36] font-medium">คำนำหน้า</span>
-            <select
-              value={edit.title}
-              onChange={(e) => setEdit({ ...edit, title: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
-            >
-              <option value="ด.ช.">ด.ช.</option>
-              <option value="ด.ญ.">ด.ญ.</option>
-            </select>
-          </label>
-          <Input label="ชื่อเด็ก" value={edit.firstName} onChange={(v) => setEdit({ ...edit, firstName: v })} />
-          <Input label="นามสกุลเด็ก" value={edit.lastName} onChange={(v) => setEdit({ ...edit, lastName: v })} />
-          <Input label="วันเกิด" type="date" value={edit.dateOfBirth} onChange={(v) => setEdit({ ...edit, dateOfBirth: v })} />
-          <Input label="ชื่อผู้ปกครอง (ไม่บังคับ)" value={edit.guardianName} onChange={(v) => setEdit({ ...edit, guardianName: v })} required={false} />
-          <Input label="เบอร์โทรผู้ปกครอง (ไม่บังคับ)" value={edit.guardianPhone} onChange={(v) => setEdit({ ...edit, guardianPhone: v })} required={false} />
-          <Input label="PID" value={edit.queueCode} onChange={(v) => setEdit({ ...edit, queueCode: v.toUpperCase() })} />
-          <div className="col-span-2">
-            <Input label="ที่อยู่" value={edit.address} onChange={(v) => setEdit({ ...edit, address: v })} />
-          </div>
-          {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
-          <div className="col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setEditing(false)} className="text-sm text-[#5B7B73] px-3 py-2">
-              ยกเลิก
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
-            >
-              {saving ? "กำลังบันทึก..." : "บันทึก"}
-            </button>
-          </div>
-        </form>
-      )}
+  const badge = BADGE_STYLE[patient.badge];
+  const pendingAppointments = [...patient.appointments]
+    .filter((a) => a.status !== "completed")
+    .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date));
+  const nextAppt = pendingAppointments[0] ?? null;
+  const completedAppointments = [...patient.appointments]
+    .filter((a) => a.status === "completed")
+    .sort((a, b) => (b.received_date ?? "").localeCompare(a.received_date ?? ""));
+  const isOverdue = nextAppt ? nextAppt.appointment_date < new Date().toISOString().slice(0, 10) : false;
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold text-[#152D28]">นัดหมาย</span>
-          <SmallButton onClick={() => setShowAddAppt((v) => !v)} icon={<Plus size={14} />}>
-            เพิ่มนัดใหม่
-          </SmallButton>
-        </div>
-
-        {showAddAppt && (
-          <form onSubmit={addAppointment} className="flex gap-2 items-end flex-wrap mb-3 bg-[#F7FAF9] border border-[#E5ECE9] rounded-xl p-3">
-            <label className="block">
-              <span className="text-sm text-[#1E3D36] font-medium">วันนัด</span>
-              <input
-                required
-                type="date"
-                value={newAppt.appointmentDate}
-                onChange={(e) => setNewAppt({ ...newAppt, appointmentDate: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm text-[#1E3D36] font-medium">ชื่อวัคซีน</span>
-              {vaccineOptions.length > 0 ? (
-                <select
-                  required
-                  value={newAppt.vaccineName}
-                  onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
-                >
-                  <option value="" disabled>เลือกวัคซีน</option>
-                  {vaccineOptions.map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  required
-                  value={newAppt.vaccineName}
-                  onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
-                />
-              )}
-            </label>
-            <button type="submit" className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5">
-              บันทึก
-            </button>
-          </form>
+  const addApptForm = (
+    <form onSubmit={addAppointment} className="flex gap-2 items-end flex-wrap mb-3 bg-white/70 border border-[#D8E5E0] rounded-xl p-3">
+      <label className="block">
+        <span className="text-sm text-[#1E3D36] font-medium">วันนัด</span>
+        <input
+          required
+          type="date"
+          value={newAppt.appointmentDate}
+          onChange={(e) => setNewAppt({ ...newAppt, appointmentDate: e.target.value })}
+          className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+        />
+      </label>
+      <label className="block">
+        <span className="text-sm text-[#1E3D36] font-medium">ชื่อวัคซีน</span>
+        {vaccineOptions.length > 0 ? (
+          <select
+            required
+            value={newAppt.vaccineName}
+            onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+          >
+            <option value="" disabled>เลือกวัคซีน</option>
+            {vaccineOptions.map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            required
+            value={newAppt.vaccineName}
+            onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+          />
         )}
+      </label>
+      <label className="block w-20">
+        <span className="text-sm text-[#1E3D36] font-medium">เข็มที่</span>
+        <input
+          type="number"
+          min={1}
+          value={newAppt.doseNumber}
+          onChange={(e) => setNewAppt({ ...newAppt, doseNumber: e.target.value })}
+          className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+        />
+      </label>
+      <button type="submit" className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2.5">
+        บันทึก
+      </button>
+    </form>
+  );
 
-        <div className="space-y-2">
-          {patient.appointments.length === 0 && (
-            <p className="text-sm text-[#A9BDB6]">ยังไม่มีนัดหมาย</p>
-          )}
-          {patient.appointments.map((a) => (
-            <div key={a.id} className="border border-[#E5ECE9] rounded-xl p-3">
-              <div className="text-sm text-[#1E3D36] mb-2">
-                <div className="font-medium">{a.appointment_date} · {a.vaccine_name}</div>
-                <div className="text-[#5B7B73] text-xs mt-0.5">
-                  {STATUS_LABEL[a.status] ?? a.status}
-                  {a.received_date && ` · รับแล้วเมื่อ ${a.received_date}`}
-                </div>
+  return (
+    <div className="grid md:grid-cols-2 gap-5">
+      {/* LEFT COLUMN */}
+      <div className="space-y-4">
+        <div className="rounded-xl bg-[#F7FAF9] border border-[#E5ECE9] p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-14 h-14 rounded-full bg-[#DCEEE7] flex items-center justify-center shrink-0">
+              <Baby size={28} className="text-[#2F6F62]" />
+            </div>
+            <div>
+              <div className="font-semibold text-[#152D28]">{displayName(patient)}</div>
+              <div className="text-xs text-[#5B7B73]">PID: {patient.queue_code ?? "-"}</div>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${badge.className}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+                {badge.label}
+              </span>
+            </div>
+          </div>
+
+          {!editing ? (
+            <>
+              <div className="divide-y divide-[#EFF4F2]">
+                <InfoRow icon={<User size={15} />} label="ชื่อเล่น" value={patient.nickname ?? ""} />
+                <InfoRow icon={<Cake size={15} />} label="วันเกิด" value={`${patient.date_of_birth} (อายุ ${calculateAge(patient.date_of_birth)})`} />
+                <InfoRow icon={<User size={15} />} label="ชื่อผู้ปกครอง" value={patient.guardian_name ?? ""} />
+                <InfoRow icon={<Phone size={15} />} label="เบอร์โทร" value={patient.guardian_phone ?? ""} />
+                <InfoRow icon={<MapPin size={15} />} label="ที่อยู่" value={patient.address ?? ""} />
               </div>
-              <div className="flex flex-wrap gap-2">
-                {a.status !== "completed" ? (
-                  <SmallButton onClick={() => markReceived(a.id)} icon={<CheckCircle2 size={14} />}>
-                    ได้รับแล้ว
+              <div className="flex flex-wrap gap-2 mt-3">
+                <SmallButton onClick={() => setEditing(true)} icon={<Pencil size={14} />}>
+                  แก้ไขข้อมูล
+                </SmallButton>
+                {patient.linked ? (
+                  <SmallButton onClick={unlinkLine} icon={<Unlink size={14} />} tone="warning">
+                    ยกเลิกเชื่อม LINE
                   </SmallButton>
                 ) : (
-                  <SmallButton onClick={() => revertReceived(a.id)} icon={<RotateCcw size={14} />} tone="warning">
-                    ยกเลิก (ยังไม่ได้รับ)
-                  </SmallButton>
+                  <span className="text-xs text-[#A9BDB6] flex items-center px-2.5">ยังไม่เชื่อม LINE</span>
                 )}
-                <SmallButton onClick={() => resendNotify(a.id)} icon={<Send size={14} />}>
+                <SmallButton onClick={deletePatient} icon={<Trash2 size={14} />} tone="danger">
+                  ลบเด็กคนนี้
+                </SmallButton>
+              </div>
+            </>
+          ) : (
+            <form onSubmit={saveEdit} className="grid grid-cols-2 gap-3 bg-white border border-[#E5ECE9] rounded-xl p-3">
+              <label className="block">
+                <span className="text-sm text-[#1E3D36] font-medium">คำนำหน้า</span>
+                <select
+                  value={edit.title}
+                  onChange={(e) => setEdit({ ...edit, title: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-[#D8E5E0] px-3 py-2 text-[#1E3D36] focus:outline-none focus:ring-2 focus:ring-[#2F6F62]"
+                >
+                  <option value="ด.ช.">ด.ช.</option>
+                  <option value="ด.ญ.">ด.ญ.</option>
+                </select>
+              </label>
+              <Input label="ชื่อเล่น (ไม่บังคับ)" value={edit.nickname} onChange={(v) => setEdit({ ...edit, nickname: v })} required={false} />
+              <Input label="ชื่อเด็ก" value={edit.firstName} onChange={(v) => setEdit({ ...edit, firstName: v })} />
+              <Input label="นามสกุลเด็ก" value={edit.lastName} onChange={(v) => setEdit({ ...edit, lastName: v })} />
+              <Input label="วันเกิด" type="date" value={edit.dateOfBirth} onChange={(v) => setEdit({ ...edit, dateOfBirth: v })} />
+              <Input label="ชื่อผู้ปกครอง (ไม่บังคับ)" value={edit.guardianName} onChange={(v) => setEdit({ ...edit, guardianName: v })} required={false} />
+              <Input label="เบอร์โทรผู้ปกครอง (ไม่บังคับ)" value={edit.guardianPhone} onChange={(v) => setEdit({ ...edit, guardianPhone: v })} required={false} />
+              <Input label="PID" value={edit.queueCode} onChange={(v) => setEdit({ ...edit, queueCode: v.toUpperCase() })} />
+              <div className="col-span-2">
+                <Input label="ที่อยู่" value={edit.address} onChange={(v) => setEdit({ ...edit, address: v })} />
+              </div>
+              {error && <p className="col-span-2 text-sm text-[#B3452E]">{error}</p>}
+              <div className="col-span-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setEditing(false)} className="text-sm text-[#5B7B73] px-3 py-2">
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-lg bg-[#2F6F62] text-white text-sm font-medium px-4 py-2 disabled:opacity-60"
+                >
+                  {saving ? "กำลังบันทึก..." : "บันทึก"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* All appointments — compact list */}
+        <div className="rounded-xl bg-white border border-[#E5ECE9] p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarPlus size={16} className="text-[#2F6F62]" />
+            <span className="text-sm font-semibold text-[#152D28]">นัดหมายทั้งหมด</span>
+          </div>
+          {patient.appointments.length === 0 ? (
+            <p className="text-sm text-[#A9BDB6]">ยังไม่มีนัดหมาย</p>
+          ) : (
+            <div className="divide-y divide-[#EFF4F2]">
+              {[...patient.appointments]
+                .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date))
+                .map((a) => (
+                  <div key={a.id} className="flex items-center justify-between py-2 text-sm">
+                    <div>
+                      <div className="text-[#1E3D36]">{a.appointment_date} · {a.vaccine_name}{a.dose_number ? ` (เข็มที่ ${a.dose_number})` : ""}</div>
+                    </div>
+                    <span className={a.status === "completed" ? "text-[#2F6F62] text-xs" : "text-[#8FAAA2] text-xs"}>
+                      {STATUS_LABEL[a.status] ?? a.status}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN */}
+      <div className="space-y-4">
+        <div className="rounded-xl bg-[#EAF3FB] border border-[#CFE3F5] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CalendarPlus size={16} className="text-[#2A6AA8]" />
+              <span className="text-sm font-semibold text-[#152D28]">นัดหมายครั้งถัดไป</span>
+            </div>
+            <SmallButton onClick={() => setShowAddAppt((v) => !v)} icon={<Plus size={14} />}>
+              ทำนัดใหม่
+            </SmallButton>
+          </div>
+
+          {showAddAppt && addApptForm}
+
+          {nextAppt ? (
+            <div>
+              <div className="text-[#152D28] font-medium">{nextAppt.appointment_date}</div>
+              <div className="text-sm text-[#1E3D36] mt-1">
+                วัคซีน: {nextAppt.vaccine_name}{nextAppt.dose_number ? ` (เข็มที่ ${nextAppt.dose_number})` : ""}
+              </div>
+              {clinicName && <div className="text-sm text-[#1E3D36] flex items-center gap-1 mt-1"><MapPin size={14} />{clinicName}</div>}
+              <div className="mt-2">
+                <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${isOverdue ? "bg-[#FBE4E0] text-[#B3452E]" : "bg-white text-[#2A6AA8]"}`}>
+                  {isOverdue ? "เลยกำหนดนัด" : "ยังไม่ถึงกำหนด"}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <SmallButton onClick={() => markReceived(nextAppt.id)} icon={<CheckCircle2 size={14} />}>
+                  ได้รับแล้ว
+                </SmallButton>
+                <SmallButton onClick={() => resendNotify(nextAppt.id)} icon={<Send size={14} />}>
                   ส่งแจ้งเตือนซ้ำ
                 </SmallButton>
-                <SmallButton onClick={() => deleteAppointment(a.id)} icon={<Trash2 size={14} />} tone="danger">
-                  ลบ
+                <SmallButton onClick={() => deleteAppointment(nextAppt.id)} icon={<Trash2 size={14} />} tone="danger">
+                  ยกเลิกนัด
                 </SmallButton>
               </div>
             </div>
-          ))}
+          ) : (
+            !showAddAppt && <p className="text-sm text-[#5B7B73]">ไม่มีนัดที่ต้องติดตามตอนนี้</p>
+          )}
+        </div>
+
+        {visitNote && (
+          <div className="rounded-xl bg-[#FCF1D9] border border-[#F0DDA8] p-3.5 flex gap-2">
+            <AlertTriangle size={16} className="text-[#946B1C] shrink-0 mt-0.5" />
+            <p className="text-sm text-[#7A5A17]">{visitNote}</p>
+          </div>
+        )}
+
+        <div className="rounded-xl bg-white border border-[#E5ECE9] p-4">
+          <span className="text-sm font-semibold text-[#152D28]">ประวัติการรับวัคซีน</span>
+          {completedAppointments.length === 0 ? (
+            <p className="text-sm text-[#A9BDB6] mt-2">ยังไม่มีประวัติการรับวัคซีน</p>
+          ) : (
+            <div className="mt-2 divide-y divide-[#EFF4F2]">
+              {completedAppointments.map((a) => (
+                <div key={a.id} className="flex items-center justify-between py-2 text-sm">
+                  <div>
+                    <div className="text-[#1E3D36]">
+                      {a.received_date ?? a.appointment_date} · {a.vaccine_name}{a.dose_number ? ` (เข็มที่ ${a.dose_number})` : ""}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-xs text-[#2F6F62]">
+                      <CheckCircle2 size={13} /> รับแล้ว
+                    </span>
+                    <button onClick={() => revertReceived(a.id)} title="ยกเลิก (ยังไม่ได้รับ)" className="text-[#946B1C] hover:bg-[#FCF1D9] rounded p-1">
+                      <RotateCcw size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

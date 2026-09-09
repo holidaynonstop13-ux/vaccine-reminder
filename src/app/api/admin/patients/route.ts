@@ -34,7 +34,7 @@ function computeBadge(
 export async function GET() {
   const { data: patients, error: patientsError } = await supabaseAdmin
     .from("patients")
-    .select("id, title, first_name, last_name, guardian_name, guardian_phone, queue_code, date_of_birth, address, created_at")
+    .select("id, title, nickname, first_name, last_name, guardian_name, guardian_phone, queue_code, date_of_birth, address, created_at")
     .order("created_at", { ascending: false });
 
   if (patientsError) {
@@ -43,7 +43,7 @@ export async function GET() {
 
   const { data: appointments } = await supabaseAdmin
     .from("appointments")
-    .select("id, patient_id, appointment_date, vaccine_name, status, received_date")
+    .select("id, patient_id, appointment_date, vaccine_name, status, received_date, dose_number")
     .order("appointment_date", { ascending: true });
 
   const { data: links } = await supabaseAdmin.from("line_links").select("patient_id");
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
     title,
+    nickname,
     firstName,
     lastName,
     dateOfBirth,
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
     .from("patients")
     .insert({
       title: title || null,
+      nickname: nickname || null,
       first_name: firstName,
       last_name: lastName,
       date_of_birth: dateOfBirth,
