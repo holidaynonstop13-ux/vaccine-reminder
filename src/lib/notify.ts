@@ -45,9 +45,9 @@ type VaccineEntry = { name: string; doseNumber: number | null };
 
 export function vaccinesLabel(vaccines: VaccineEntry[] | null | undefined, legacyName?: string | null, legacyDose?: number | null): string {
   if (vaccines && vaccines.length > 0) {
-    return vaccines.map((v) => (v.doseNumber ? `${v.name} (เข็มที่ ${v.doseNumber})` : v.name)).join(", ");
+    return vaccines.map((v) => `• ${v.name}${v.doseNumber ? ` (เข็มที่ ${v.doseNumber})` : ""}`).join("\n");
   }
-  if (legacyName) return legacyDose ? `${legacyName} (เข็มที่ ${legacyDose})` : legacyName;
+  if (legacyName) return legacyDose ? `• ${legacyName} (เข็มที่ ${legacyDose})` : `• ${legacyName}`;
   return "-";
 }
 
