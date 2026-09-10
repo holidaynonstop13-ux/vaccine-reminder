@@ -29,6 +29,8 @@ import {
 import { AdminSidebar } from "@/components/admin-sidebar";
 import * as XLSX from "xlsx";
 
+type VaccineEntry = { name: string; doseNumber: number | null };
+
 type Appointment = {
   id: string;
   appointment_date: string;
@@ -36,7 +38,16 @@ type Appointment = {
   status: string;
   received_date: string | null;
   dose_number: number | null;
+  vaccines: VaccineEntry[] | null;
 };
+
+function vaccinesLabel(a: Pick<Appointment, "vaccines" | "vaccine_name" | "dose_number">): string {
+  if (a.vaccines && a.vaccines.length > 0) {
+    return a.vaccines.map((v) => (v.doseNumber ? `${v.name} (เข็มที่ ${v.doseNumber})` : v.name)).join(", ");
+  }
+  if (a.vaccine_name) return a.dose_number ? `${a.vaccine_name} (เข็มที่ ${a.dose_number})` : a.vaccine_name;
+  return "-";
+}
 
 type Patient = {
   id: string;
@@ -809,7 +820,15 @@ function PatientDetail({
   const [saving, setSaving] = useState(false);
 
   const [showAddAppt, setShowAddAppt] = useState(false);
-  const [newAppt, setNewAppt] = useState({ appointmentDate: "", vaccineName: "", doseNumber: "" });
+  const [newAppt, setNewAppt] = useState<{ appointmentDate: string; slots: { name: string; doseNumber: string }[] }>({
+    appointmentDate: "",
+    slots: [{ name: "", doseNumber: "" }],
+  });
+  const [editingApptId, setEditingApptId] = useState<string | null>(null);
+  const [editAppt, setEditAppt] = useState<{ appointmentDate: string; slots: { name: string; doseNumber: string }[] }>({
+    appointmentDate: "",
+    slots: [{ name: "", doseNumber: "" }],
+  });
   const [vaccineOptions, setVaccineOptions] = useState<string[]>([]);
   const [clinicName, setClinicName] = useState("");
 
@@ -882,12 +901,35 @@ function PatientDetail({
       body: JSON.stringify({
         patientId: patient.id,
         appointmentDate: newAppt.appointmentDate,
-        vaccineName: newAppt.vaccineName,
-        doseNumber: newAppt.doseNumber ? Number(newAppt.doseNumber) : null,
+        vaccines: newAppt.slots.map((s) => ({ name: s.name, doseNumber: s.doseNumber ? Number(s.doseNumber) : null })),
       }),
     });
-    setNewAppt({ appointmentDate: "", vaccineName: "", doseNumber: "" });
+    setNewAppt({ appointmentDate: "", slots: [{ name: "", doseNumber: "" }] });
     setShowAddAppt(false);
+    onChanged();
+  }
+
+  function startEditAppt(appt: Appointment) {
+    const slots =
+      appt.vaccines && appt.vaccines.length > 0
+        ? appt.vaccines.map((v) => ({ name: v.name, doseNumber: v.doseNumber ? String(v.doseNumber) : "" }))
+        : [{ name: appt.vaccine_name, doseNumber: appt.dose_number ? String(appt.dose_number) : "" }];
+    setEditAppt({ appointmentDate: appt.appointment_date, slots });
+    setEditingApptId(appt.id);
+  }
+
+  async function saveEditAppt(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingApptId) return;
+    await fetch(`/api/admin/appointments/${editingApptId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        appointmentDate: editAppt.appointmentDate,
+        vaccines: editAppt.slots.map((s) => ({ name: s.name, doseNumber: s.doseNumber ? Number(s.doseNumber) : null })),
+      }),
+    });
+    setEditingApptId(null);
     onChanged();
   }
 
@@ -935,7 +977,7 @@ function PatientDetail({
   const isOverdue = nextAppt ? nextAppt.appointment_date < new Date().toISOString().slice(0, 10) : false;
 
   const addApptForm = (
-    <form onSubmit={addAppointment} className="flex gap-2 items-end flex-wrap mb-3 bg-white/70 border border-[#CFE7E1] rounded-xl p-3">
+    <form onSubmit={addAppointment} className="mb-3 bg-white/70 border border-[#CFE7E1] rounded-xl p-3 space-y-2">
       <label className="block">
         <span className="text-sm text-[#173B3B] font-medium">วันนัด</span>
         <input
@@ -946,42 +988,34 @@ function PatientDetail({
           className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
         />
       </label>
-      <label className="block">
-        <span className="text-sm text-[#173B3B] font-medium">ชื่อวัคซีน</span>
-        {vaccineOptions.length > 0 ? (
-          <select
-            required
-            value={newAppt.vaccineName}
-            onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
-          >
-            <option value="" disabled>เลือกวัคซีน</option>
-            {vaccineOptions.map((v) => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </select>
-        ) : (
-          <input
-            required
-            value={newAppt.vaccineName}
-            onChange={(e) => setNewAppt({ ...newAppt, vaccineName: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
-          />
-        )}
-      </label>
-      <label className="block w-20">
-        <span className="text-sm text-[#173B3B] font-medium">เข็มที่</span>
-        <input
-          type="number"
-          min={1}
-          value={newAppt.doseNumber}
-          onChange={(e) => setNewAppt({ ...newAppt, doseNumber: e.target.value })}
-          className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
-        />
-      </label>
+      <VaccineSlots slots={newAppt.slots} onChange={(slots) => setNewAppt({ ...newAppt, slots })} vaccineOptions={vaccineOptions} />
       <button type="submit" className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2.5">
         บันทึก
       </button>
+    </form>
+  );
+
+  const editApptForm = (
+    <form onSubmit={saveEditAppt} className="mb-3 bg-white border border-[#CFE7E1] rounded-xl p-3 space-y-2">
+      <label className="block">
+        <span className="text-sm text-[#173B3B] font-medium">วันนัด</span>
+        <input
+          required
+          type="date"
+          value={editAppt.appointmentDate}
+          onChange={(e) => setEditAppt({ ...editAppt, appointmentDate: e.target.value })}
+          className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
+        />
+      </label>
+      <VaccineSlots slots={editAppt.slots} onChange={(slots) => setEditAppt({ ...editAppt, slots })} vaccineOptions={vaccineOptions} />
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={() => setEditingApptId(null)} className="text-sm text-[#668585] px-3 py-2">
+          ยกเลิก
+        </button>
+        <button type="submit" className="rounded-lg bg-[#177C6D] text-white text-sm font-medium px-4 py-2.5">
+          บันทึกการแก้ไข
+        </button>
+      </div>
     </form>
   );
 
@@ -1082,11 +1116,11 @@ function PatientDetail({
               {[...patient.appointments]
                 .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date))
                 .map((a) => (
-                  <div key={a.id} className="flex items-center justify-between py-2 text-sm">
-                    <div>
-                      <div className="text-[#173B3B]">{a.appointment_date} · {a.vaccine_name}{a.dose_number ? ` (เข็มที่ ${a.dose_number})` : ""}</div>
+                  <div key={a.id} className="flex items-center justify-between py-2 text-sm gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[#173B3B] text-[13px] leading-snug">{a.appointment_date} · {vaccinesLabel(a)}</div>
                     </div>
-                    <span className={a.status === "completed" ? "text-[#177C6D] text-xs" : "text-[#A9BBC3] text-xs"}>
+                    <span className={`shrink-0 ${a.status === "completed" ? "text-[#177C6D] text-xs" : "text-[#A9BBC3] text-xs"}`}>
                       {STATUS_LABEL[a.status] ?? a.status}
                     </span>
                   </div>
@@ -1111,11 +1145,13 @@ function PatientDetail({
 
           {showAddAppt && addApptForm}
 
-          {nextAppt ? (
+          {nextAppt && editingApptId === nextAppt.id && editApptForm}
+
+          {nextAppt && editingApptId !== nextAppt.id ? (
             <div>
               <div className="text-[#0D4A49] font-medium">{nextAppt.appointment_date}</div>
-              <div className="text-sm text-[#173B3B] mt-1">
-                วัคซีน: {nextAppt.vaccine_name}{nextAppt.dose_number ? ` (เข็มที่ ${nextAppt.dose_number})` : ""}
+              <div className="text-sm text-[#173B3B] mt-1 leading-snug">
+                วัคซีน: {vaccinesLabel(nextAppt)}
               </div>
               {clinicName && <div className="text-sm text-[#173B3B] flex items-center gap-1 mt-1"><MapPin size={14} />{clinicName}</div>}
               <div className="mt-2">
@@ -1124,6 +1160,9 @@ function PatientDetail({
                 </span>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
+                <SmallButton onClick={() => startEditAppt(nextAppt)} icon={<Pencil size={14} />}>
+                  แก้ไขนัด
+                </SmallButton>
                 <SmallButton onClick={() => markReceived(nextAppt.id)} icon={<CheckCircle2 size={14} />}>
                   ได้รับแล้ว
                 </SmallButton>
@@ -1136,7 +1175,7 @@ function PatientDetail({
               </div>
             </div>
           ) : (
-            !showAddAppt && <p className="text-sm text-[#668585]">ไม่มีนัดที่ต้องติดตามตอนนี้</p>
+            !showAddAppt && !nextAppt && <p className="text-sm text-[#668585]">ไม่มีนัดที่ต้องติดตามตอนนี้</p>
           )}
         </div>
 
@@ -1147,10 +1186,10 @@ function PatientDetail({
           ) : (
             <div className="mt-2 divide-y divide-[#E9F2F0]">
               {completedAppointments.map((a) => (
-                <div key={a.id} className="flex items-center justify-between py-2 text-sm">
-                  <div>
-                    <div className="text-[#173B3B]">
-                      {a.received_date ?? a.appointment_date} · {a.vaccine_name}{a.dose_number ? ` (เข็มที่ ${a.dose_number})` : ""}
+                <div key={a.id} className="flex items-center justify-between py-2 text-sm gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[#173B3B] text-[13px] leading-snug">
+                      {a.received_date ?? a.appointment_date} · {vaccinesLabel(a)}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -1167,6 +1206,84 @@ function PatientDetail({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function VaccineSlots({
+  slots,
+  onChange,
+  vaccineOptions,
+}: {
+  slots: { name: string; doseNumber: string }[];
+  onChange: (slots: { name: string; doseNumber: string }[]) => void;
+  vaccineOptions: string[];
+}) {
+  function updateSlot(i: number, patch: Partial<{ name: string; doseNumber: string }>) {
+    onChange(slots.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  }
+  function addSlot() {
+    if (slots.length >= 5) return;
+    onChange([...slots, { name: "", doseNumber: "" }]);
+  }
+  function removeSlot(i: number) {
+    if (slots.length <= 1) return;
+    onChange(slots.filter((_, idx) => idx !== i));
+  }
+
+  return (
+    <div className="space-y-2">
+      {slots.map((slot, i) => (
+        <div key={i} className="flex gap-2 items-end">
+          <label className="block flex-1">
+            {i === 0 && <span className="text-sm text-[#173B3B] font-medium">วัคซีน (สูงสุด 5 ตัวต่อนัด)</span>}
+            {vaccineOptions.length > 0 ? (
+              <select
+                required
+                value={slot.name}
+                onChange={(e) => updateSlot(i, { name: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-sm text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
+              >
+                <option value="" disabled>เลือกวัคซีน</option>
+                {vaccineOptions.map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                required
+                value={slot.name}
+                onChange={(e) => updateSlot(i, { name: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-sm text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
+              />
+            )}
+          </label>
+          <label className="block w-16 shrink-0">
+            {i === 0 && <span className="text-sm text-[#173B3B] font-medium">เข็มที่</span>}
+            <input
+              type="number"
+              min={1}
+              value={slot.doseNumber}
+              onChange={(e) => updateSlot(i, { doseNumber: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-[#CFE7E1] px-3 py-2 text-sm text-[#173B3B] focus:outline-none focus:ring-2 focus:ring-[#177C6D]"
+            />
+          </label>
+          {slots.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeSlot(i)}
+              className="text-[#D94C58] hover:bg-[#FFE6E6] rounded-lg p-2 shrink-0"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      ))}
+      {slots.length < 5 && (
+        <button type="button" onClick={addSlot} className="flex items-center gap-1 text-xs text-[#177C6D] font-medium hover:underline">
+          <Plus size={12} /> เพิ่มวัคซีน ({slots.length}/5)
+        </button>
+      )}
     </div>
   );
 }

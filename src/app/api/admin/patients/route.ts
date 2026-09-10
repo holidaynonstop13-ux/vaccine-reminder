@@ -43,7 +43,7 @@ export async function GET() {
 
   const { data: appointments } = await supabaseAdmin
     .from("appointments")
-    .select("id, patient_id, appointment_date, vaccine_name, status, received_date, dose_number")
+    .select("id, patient_id, appointment_date, vaccine_name, status, received_date, dose_number, vaccines")
     .order("appointment_date", { ascending: true });
 
   const { data: links } = await supabaseAdmin.from("line_links").select("patient_id");

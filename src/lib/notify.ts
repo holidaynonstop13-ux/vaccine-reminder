@@ -41,6 +41,15 @@ export async function sendLinePush(lineUserId: string, text: string) {
 }
 
 type PatientRef = { id: string; first_name: string; last_name: string };
+type VaccineEntry = { name: string; doseNumber: number | null };
+
+export function vaccinesLabel(vaccines: VaccineEntry[] | null | undefined, legacyName?: string | null, legacyDose?: number | null): string {
+  if (vaccines && vaccines.length > 0) {
+    return vaccines.map((v) => (v.doseNumber ? `${v.name} (เข็มที่ ${v.doseNumber})` : v.name)).join(", ");
+  }
+  if (legacyName) return legacyDose ? `${legacyName} (เข็มที่ ${legacyDose})` : legacyName;
+  return "-";
+}
 
 export async function sendTodaysReminders(options: { respectPause?: boolean } = {}) {
   const settings = await getSettings();
@@ -59,7 +68,7 @@ export async function sendTodaysReminders(options: { respectPause?: boolean } = 
 
   const { data: appointments, error: apptError } = await supabaseAdmin
     .from("appointments")
-    .select("id, vaccine_name, appointment_date, patients(id, first_name, last_name)")
+    .select("id, vaccine_name, dose_number, vaccines, appointment_date, patients(id, first_name, last_name)")
     .eq("appointment_date", today)
     .in("status", ["scheduled", "confirmed"]);
 
@@ -99,7 +108,7 @@ export async function sendTodaysReminders(options: { respectPause?: boolean } = 
 
     const text = fillTemplate(settings.messageTemplate, {
       childName: `${patient.first_name} ${patient.last_name}`,
-      vaccineName: appt.vaccine_name,
+      vaccineName: vaccinesLabel(appt.vaccines as VaccineEntry[] | null, appt.vaccine_name, appt.dose_number),
       appointmentDate: appt.appointment_date,
       clinicName: settings.clinicName,
     });

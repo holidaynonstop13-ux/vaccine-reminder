@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSettings, fillTemplate, sendLinePush } from "@/lib/notify";
+import { getSettings, fillTemplate, sendLinePush, vaccinesLabel } from "@/lib/notify";
 
 export async function POST(
   _req: NextRequest,
@@ -10,7 +10,7 @@ export async function POST(
 
   const { data: appt, error: apptError } = await supabaseAdmin
     .from("appointments")
-    .select("id, appointment_date, vaccine_name, patients(id, first_name, last_name)")
+    .select("id, appointment_date, vaccine_name, dose_number, vaccines, patients(id, first_name, last_name)")
     .eq("id", id)
     .maybeSingle();
 
@@ -37,7 +37,7 @@ export async function POST(
   const settings = await getSettings();
   const text = fillTemplate(settings.messageTemplate, {
     childName: `${patient.first_name} ${patient.last_name}`,
-    vaccineName: appt.vaccine_name,
+    vaccineName: vaccinesLabel(appt.vaccines, appt.vaccine_name, appt.dose_number),
     appointmentDate: appt.appointment_date,
     clinicName: settings.clinicName,
   });
